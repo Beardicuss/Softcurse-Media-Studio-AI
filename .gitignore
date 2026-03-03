@@ -102,5 +102,18 @@ gui/settings.json
 *.jpg
 *.jpeg
 *.mp4
+!assets/*.png
+!assets/*.ico
 !uploaded_image*.png
 !uploaded_image*.jpg
+
+# Temp working files
+temp/
+
+# Inno Setup output
+installer/
+
+# Build artifacts and publish results
+publish/
+[Bb]in/
+[Oo]bj/

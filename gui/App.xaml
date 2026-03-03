@@ -199,6 +199,52 @@
                 <Setter Property="Padding"         Value="8,5"/>
             </Style>
 
+            <!-- Global implicit ComboBoxItem dark style (catches ALL dropdowns) -->
+            <Style TargetType="ComboBoxItem">
+                <Setter Property="Background"  Value="#0A1520"/>
+                <Setter Property="Foreground"  Value="{StaticResource CyberAccentBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="Padding"     Value="8,5"/>
+                <Setter Property="FontSize"    Value="11"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ComboBoxItem">
+                            <Border x:Name="Bd" Background="#0A1520"
+                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1"
+                                    Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#153040"/>
+                                    <Setter Property="Foreground" Value="#00E5FF"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#1A4060"/>
+                                    <Setter Property="Foreground" Value="#00E5FF"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#153040"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Override the Popup background for ALL ComboBoxes app-wide -->
+            <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#0A1520"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#153040"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#00E5FF"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="#0A1520"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="#9AC8D8"/>
+
+            <!-- Override default ListView/GridView backgrounds for dark theme -->
+            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#153040"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#00E5FF"/>
+
             <!-- ── TEXTBOX ──────────────────────────────────────────────── -->
             <Style x:Key="HudTextBox" TargetType="TextBox">
                 <Setter Property="Background"      Value="#06101A"/>

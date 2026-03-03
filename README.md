@@ -2,55 +2,76 @@
 
 ![Softcurse Media Studio AI](assets/media.png)
 
-A powerful, hardware-accelerated Windows WPF application designed for advanced image manipulation, AI-powered object removal, and generative expansion.
+A powerful, hardware-accelerated Windows WPF application for advanced image manipulation, AI-powered object removal, video processing, sprite generation, and generative AI expansion.
 
 ## Features
 
-### Advanced Masking Tools
-- **Auto Mode:** Automatically detect and remove watermarks.
-- **Cyber Brush:** Paint custom masks for precise inpainting.
-- **Eraser:** Refine your masks and protect specific areas.
-- **Poly Lasso:** Draw point-to-point geometric masks.
-- **Magic Wand (SAM):** Click any object to automatically generate a perfect mask using the Segment Anything Model (SAM).
+### Image Editor
+- **Auto Mode:** Automatically detect and remove watermarks using LaMa inpainting
+- **Cyber Brush:** Paint custom masks for precise object removal
+- **Eraser:** Refine masks and protect specific areas
+- **Poly Lasso:** Draw point-to-point geometric masks
+- **Magic Wand (SAM):** Click any object to auto-generate a mask using Segment Anything Model
 
-### AI Image Editing
-- **Background Removal:** Instantly strip the background from your images.
-- **Retouch (LaMa Inpainting):** Seamlessly remove objects, watermarks, or text using hardware-accelerated LaMa ONNX models (with DirectML GPU support and automatic CPU fallback).
-- **Expand:** Outpaint and extend your image boundaries using Stable Diffusion.
-- **Upscale:** Enhance your image resolution using AI ESRGAN.
-- **Generative Fill:** Inpaint missing or masked regions with custom text prompts using Stable Diffusion.
+### AI-Powered Tools
+- **Background Removal:** Instantly strip image backgrounds
+- **Retouch (LaMa Inpainting):** Seamlessly remove objects/watermarks using ONNX models (DirectML GPU + automatic CPU fallback)
+- **Expand:** Outpaint and extend image boundaries via Stable Diffusion
+- **Upscale:** Enhance resolution using AI ESRGAN
+- **Generative Fill:** Inpaint masked regions with text prompts via Stable Diffusion
+
+### Additional Modules
+- **Mask Processor:** Batch mask processing and refinement
+- **Video Lab:** Frame-by-frame watermark removal from video files with audio remuxing
+- **AI Generation Hub:** Text-to-image generation with positive/negative prompt control
+- **Sprite Generator:** Generate sprite sheets from text descriptions
 
 ## Requirements
 
 ### Core Application
-- Windows 10/11
-- [.NET 8.0 SDK or Runtime](https://dotnet.microsoft.com/download)
+- Windows 10/11 (64-bit)
+- [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
 
 ### AI Generative Features (Optional)
-To use the Generative Fill, Expand, and Upscale features, you must have a [Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) instance running with the `--api` flag enabled.
-- Connect the application to your API via the **Settings** menu (default: `http://127.0.0.1:7860/`).
+For Generative Fill, Expand, and Upscale features, run a [Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) instance with the `--api` flag.
+- Configure API endpoint via **Settings** tab (default: `http://127.0.0.1:7860/`)
 
-## How to Run
+## Installation
 
-1. Clone or download the repository.
-2. Open a PowerShell terminal in the `gui` folder:
-   ```powershell
-   cd "d:\Projects\Gemini watermark remover\gui"
-   ```
-3. Run the application:
-   ```powershell
-   dotnet run
-   ```
+### From Installer
+1. Download `SoftcurseMediaStudioAI_Setup_v2.8.exe` from Releases
+2. Run the installer and follow the prompts
+3. Launch from desktop shortcut or Start Menu
+
+### From Source
+```powershell
+git clone https://github.com/Beardicuss/Softcurse-Media-Studio-AI.git
+cd Softcurse-Media-Studio-AI
+dotnet run --project gui/GeminiWatermarkRemover.csproj
+```
+
+### Portable (Publish Folder)
+Copy the `publish/` folder contents to any directory and run `SoftcurseMediaStudioAI.exe`.
 
 ## Usage
-1. Launch the application and select a tool from the sidebar (Image Editor, Generative Fill, Video Editor).
-2. **Settings:** First, configure your Default Output Folder and Stable Diffusion API Endpoint in the Settings tab.
-3. **Image Editor:** Drag and drop an image. Select your masking tool from the dropdown (Cyber Brush, Magic Wand, etc.).
-4. Draw your mask and click **APPLY MASK (RETOUCH)** to remove the object, or select other tools like **BACKGROUND**, **EXPAND**, or **UPSCALE**.
-5. Click **SAVE** to export your final image.
+1. Launch the application — sidebar icons animate to indicate the app is ready
+2. **Settings:** Configure Default Output Folder and API endpoints
+3. **Image Editor:** Drag/drop an image or click LOAD IMAGE. Select your tool from the bottom panel (highlighted tool glows cyan when active)
+4. Draw your mask and click **APPLY MASK (RETOUCH)** to remove objects
+5. Use **BACKGROUND**, **EXPAND**, **UPSCALE**, or switch to other modules
+6. Click **SAVE** to export results
 
 ## Technology Stack
-- **UI Framework:** Windows Presentation Foundation (WPF) with ModernWpfUI.
-- **Image Processing:** OpenCvSharp4.
-- **Local AI Inference:** Microsoft.ML.OnnxRuntime (DirectML & CPU).
-- **Network API:** HttpClient REST integrations for standard SDAPI payloads.
+- **UI Framework:** WPF with ModernWpfUI, custom cyberpunk HUD theme
+- **Image Processing:** OpenCvSharp4
+- **AI Inference:** Microsoft.ML.OnnxRuntime (DirectML GPU + CPU fallback)
+- **Video Processing:** OpenCV VideoCapture/VideoWriter + FFmpeg audio remux
+- **Network API:** HttpClient REST for Stable Diffusion API integration
+
+## Building the Installer
+Requires [Inno Setup](https://jrsoftware.org/isinfo.php):
+```powershell
+dotnet publish gui/GeminiWatermarkRemover.csproj -c Release -r win-x64 --self-contained false -o publish
+iscc media.iss
+```
+The installer will be output to the `installer/` directory.
