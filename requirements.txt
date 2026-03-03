@@ -1,0 +1,18 @@
+# Prerequisites
+.NET 8.0 SDK or Runtime (Windows)
+
+# NuGet Dependencies (Autorestored on build)
+Microsoft.ML.OnnxRuntime (1.24.2)
+Microsoft.ML.OnnxRuntime.DirectML (1.24.2)
+Microsoft.ML.OnnxRuntime.Managed (1.24.2)
+ModernWpfUI (0.9.6)
+OpenCvSharp4.Windows (4.9.0.20240103)
+System.Numerics.Tensors (10.0.2)
+
+# External API Requirements (For Generative AI Features)
+Stable Diffusion WebUI (AUTOMATIC1111 or similar) running locally or remotely with the `--api` flag enabled.
+Default expected endpoint: http://127.0.0.1:7860/
+
+# External Models
+- LaMa ONNX Model: Placed in models/lama_fp32.onnx or automatically downloaded.
+- Segment Anything Model (SAM) ONNX: Encoder and Decoder models placed in models/ directory.

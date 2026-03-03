@@ -1,0 +1,62 @@
+<UserControl x:Class="GeminiWatermarkRemover.Views.VideoLabPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.modernwpf.com/2019">
+    <Grid>
+
+        
+        <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <Button Content="LOAD VIDEO" Click="SelectVideo_Click" Margin="0,0,10,0" BorderBrush="{StaticResource CyberSecondaryBrush}" Foreground="{StaticResource CyberSecondaryBrush}" BorderThickness="1" Background="Transparent" />
+            <TextBlock x:Name="VideoInfoText" VerticalAlignment="Center" Text="AWAITING VIDEO INPUT..." Foreground="{StaticResource CyberAccentBrush}"/>
+        </StackPanel>
+        
+        <!-- Image Display -->
+        <Border Grid.Row="1" BorderBrush="{StaticResource CyberAccentBrush}" BorderThickness="1" Background="#1100FFFF" CornerRadius="0" ClipToBounds="True" Margin="0,0,0,10">
+            <Border.Effect>
+                <DropShadowEffect Color="#00FFFF" BlurRadius="20" ShadowDepth="0" Opacity="0.5"/>
+            </Border.Effect>
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PanningMode="Both">
+                <Grid x:Name="ImageContainer" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Image x:Name="FirstFrameDisplay" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <InkCanvas x:Name="MaskInkCanvas" Background="Transparent" Visibility="Collapsed">
+                        <InkCanvas.DefaultDrawingAttributes>
+                            <DrawingAttributes Color="#80FF0000" Width="20" Height="20" FitToCurve="True"/>
+                        </InkCanvas.DefaultDrawingAttributes>
+                    </InkCanvas>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+        
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <TextBlock Text="BRUSH SIZE:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{StaticResource CyberAccentBrush}"/>
+                <Slider x:Name="BrushSizeSlider" Minimum="5" Maximum="100" Value="20" Width="100" VerticalAlignment="Center" ValueChanged="BrushSize_ValueChanged"/>
+            </StackPanel>
+            
+            <ProgressBar x:Name="VideoProgressBar" Grid.Column="1" Height="20" Margin="15,0,15,0" Minimum="0" Maximum="100" Foreground="{StaticResource CyberMagentaBrush}" Background="#1100FFFF"/>
+            
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <Button Content="CLEAR MASK" Click="ClearMask_Click" Margin="0,0,10,0" BorderBrush="{StaticResource CyberMagentaBrush}" Foreground="{StaticResource CyberMagentaBrush}" BorderThickness="1" Background="Transparent" />
+                <Button x:Name="ProcessVideoButton" Content="INPAINT VIDEO" Click="ProcessVideo_Click" ui:ControlHelper.CornerRadius="0" Background="{StaticResource CyberAccentBrush}" Foreground="#020202" FontWeight="Bold" IsEnabled="False">
+                    <Button.Effect>
+                        <DropShadowEffect Color="#00FFFF" BlurRadius="10" ShadowDepth="0" />
+                    </Button.Effect>
+                </Button>
+                <Button x:Name="CancelProcessButton" Content="CANCEL" Click="CancelProcess_Click" Margin="10,0,0,0" Visibility="Collapsed" BorderBrush="{StaticResource CyberMagentaBrush}" Foreground="{StaticResource CyberMagentaBrush}" BorderThickness="1" Background="Transparent"/>
+            </StackPanel>
+        </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

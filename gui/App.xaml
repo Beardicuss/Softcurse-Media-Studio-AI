@@ -1,0 +1,44 @@
+<Application x:Class="GeminiWatermarkRemover.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.modernwpf.com/2019"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemeResources />
+                <ui:XamlControlsResources />
+            </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Global Cyberpunk Theme Resources -->
+            <SolidColorBrush x:Key="SystemControlHighlightAccentBrush" Color="#00FFFF" />
+            <SolidColorBrush x:Key="SystemControlHighlightAltListAccentHighBrush" Color="#0088FF" />
+            <SolidColorBrush x:Key="CyberBackgroundBrush" Color="#020202" />
+            <SolidColorBrush x:Key="CyberAccentBrush" Color="#00FFFF" />
+            <SolidColorBrush x:Key="CyberSecondaryBrush" Color="#0088FF" />
+            <SolidColorBrush x:Key="CyberMagentaBrush" Color="#FF00FF" />
+
+            <!-- Cyan Grid Overlay Brush -->
+            <DrawingBrush x:Key="CyberGridBrush" Viewport="0,0,30,30" ViewportUnits="Absolute" TileMode="Tile">
+                <DrawingBrush.Drawing>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Geometry>
+                            <RectangleGeometry Rect="0,0,30,30"/>
+                        </GeometryDrawing.Geometry>
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#2000FFFF" Thickness="1"/>
+                        </GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                </DrawingBrush.Drawing>
+            </DrawingBrush>
+
+            <!-- Base Window Cyber Style -->
+            <Style x:Key="CyberWindowStyle" TargetType="Window">
+                <Setter Property="Background" Value="{StaticResource CyberBackgroundBrush}"/>
+                <Setter Property="Foreground" Value="#00FFFF"/>
+                <Setter Property="FontFamily" Value="Consolas, Courier New, monospace"/>
+            </Style>
+            
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

@@ -1,0 +1,67 @@
+<UserControl x:Class="GeminiWatermarkRemover.Views.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.modernwpf.com/2019">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="SETTINGS" FontSize="24" FontWeight="Bold" Foreground="{StaticResource CyberAccentBrush}" Margin="0,0,0,20"/>
+
+        <!-- General Settings -->
+        <Border Grid.Row="1" BorderBrush="{StaticResource CyberSecondaryBrush}" BorderThickness="1" Background="#1100FFFF" Padding="15" Margin="0,0,0,20">
+            <StackPanel>
+                <TextBlock Text="GENERAL" FontSize="16" FontWeight="Bold" Foreground="{StaticResource CyberMagentaBrush}" Margin="0,0,0,10"/>
+                
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Default Output Folder:" VerticalAlignment="Center" Width="150" Foreground="{StaticResource CyberAccentBrush}"/>
+                    <TextBox x:Name="DefaultOutputTextBox" Width="300" Background="#1100FFFF" Foreground="#00FFFF" BorderBrush="{StaticResource CyberSecondaryBrush}"/>
+                    <Button Content="BROWSE" Click="BrowseOutput_Click" Margin="10,0,0,0" BorderBrush="{StaticResource CyberSecondaryBrush}" Foreground="{StaticResource CyberSecondaryBrush}" BorderThickness="1" Background="Transparent"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Model Execution -->
+        <Border Grid.Row="2" BorderBrush="{StaticResource CyberSecondaryBrush}" BorderThickness="1" Background="#1100FFFF" Padding="15" Margin="0,0,0,20">
+            <StackPanel>
+                <TextBlock Text="AI MODEL EXECUTION" FontSize="16" FontWeight="Bold" Foreground="{StaticResource CyberMagentaBrush}" Margin="0,0,0,10"/>
+                
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Execution Provider:" VerticalAlignment="Center" Width="150" Foreground="{StaticResource CyberAccentBrush}"/>
+                    <ComboBox x:Name="ExecutionProviderCombo" Width="200" Background="#1100FFFF" Foreground="#00FFFF" BorderBrush="{StaticResource CyberSecondaryBrush}">
+                        <ComboBoxItem Content="CPU (Default)"/>
+                        <ComboBoxItem Content="CUDA (NVIDIA GPU)"/>
+                        <ComboBoxItem Content="DirectML (Any GPU)"/>
+                    </ComboBox>
+                </StackPanel>
+                <TextBlock Text="Note: GPU execution requires appropriate CUDA/DirectML drivers installed." FontSize="11" Foreground="Gray" Margin="150,0,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Generative Fill -->
+        <Border Grid.Row="3" BorderBrush="{StaticResource CyberSecondaryBrush}" BorderThickness="1" Background="#1100FFFF" Padding="15" Margin="0,0,0,20">
+            <StackPanel>
+                <TextBlock Text="GENERATIVE FILL API" FontSize="16" FontWeight="Bold" Foreground="{StaticResource CyberMagentaBrush}" Margin="0,0,0,10"/>
+                
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="SD WebUI API Endpoint:" VerticalAlignment="Center" Width="150" Foreground="{StaticResource CyberAccentBrush}"/>
+                    <TextBox x:Name="ApiEndpointTextBox" Text="http://127.0.0.1:7860/sdapi/v1/txt2img" Width="300" Background="#1100FFFF" Foreground="#00FFFF" BorderBrush="{StaticResource CyberSecondaryBrush}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        
+        <!-- Save/Cancel -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="SAVE SETTINGS" Click="SaveSettings_Click" ui:ControlHelper.CornerRadius="0" Background="{StaticResource CyberAccentBrush}" Foreground="#020202" FontWeight="Bold" Width="150">
+                <Button.Effect>
+                    <DropShadowEffect Color="#00FFFF" BlurRadius="10" ShadowDepth="0" />
+                </Button.Effect>
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>
