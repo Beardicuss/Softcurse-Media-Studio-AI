@@ -456,6 +456,15 @@ namespace GeminiWatermarkRemover.Views
             CancelBtn.IsEnabled = false;
         }
 
+        private void DownloadSdWebui_Click(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "https://github.com/AUTOMATIC1111/stable-diffusion-webui/releases",
+                UseShellExecute = true
+            });
+        }
+
         private void ExportSheet_Click(object sender, RoutedEventArgs e)
         {
             if (_spriteSheetPath == null) return;

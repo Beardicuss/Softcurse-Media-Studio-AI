@@ -27,6 +27,9 @@ namespace GeminiWatermarkRemover.Views
                 ApiEndpointTextBox.Text = "http://127.0.0.1:7860/";
             }
             ExecutionProviderCombo.SelectedIndex = AppSettings.ExecutionProvider;
+
+            // Model directory — show user override or placeholder with auto-resolved path
+            ModelDirectoryTextBox.Text = AppSettings.ModelDirectory;
         }
 
         private void BrowseOutput_Click(object sender, RoutedEventArgs e)
@@ -38,11 +41,21 @@ namespace GeminiWatermarkRemover.Views
             }
         }
 
+        private void BrowseModelDir_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFolderDialog { Title = "Select Model Directory" };
+            if (dialog.ShowDialog() == true)
+            {
+                ModelDirectoryTextBox.Text = dialog.FolderName;
+            }
+        }
+
         private void SaveSettings_Click(object sender, RoutedEventArgs e)
         {
             AppSettings.DefaultOutputFolder = DefaultOutputTextBox.Text;
             AppSettings.ApiEndpoint = ApiEndpointTextBox.Text;
             AppSettings.ExecutionProvider = ExecutionProviderCombo.SelectedIndex;
+            AppSettings.ModelDirectory = ModelDirectoryTextBox.Text.Trim();
             AppSettings.Save(); // Single write to disk
 
             DarkMessageBox.Show("Settings saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);

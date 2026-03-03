@@ -230,6 +230,14 @@
 
                     <Rectangle Height="1" Fill="{StaticResource BorderBrush}" Margin="0,10,0,10"/>
 
+                    <!-- SD WebUI Requirement -->
+                    <TextBlock Text="REQUIRES: Stable Diffusion WebUI running with --api flag"
+                               FontSize="9" Foreground="#FF6B6B" FontFamily="Segoe UI"
+                               TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                    <Button Content="DOWNLOAD SD WEBUI" Height="28"
+                            Style="{StaticResource BtnOutline}" Margin="0,0,0,6"
+                            Click="DownloadSdWebui_Click"/>
+
                     <TextBlock Text="EXPORT" FontSize="10" FontWeight="Bold"
                                Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,0,0,8"/>
                     <Button x:Name="ExportSheetBtn" Content="SAVE SPRITE SHEET (PNG)" Height="30"

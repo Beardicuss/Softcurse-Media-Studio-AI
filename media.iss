@@ -1,5 +1,5 @@
 ; Inno Setup Script for Softcurse Media Studio AI
-; Created: 2026-03-03
+; Updated: 2026-03-03 — v2.9 (glitch logo, model dir setting, SD WebUI download)
 
 #define MyAppName "Softcurse Media Studio AI"
 #define MyAppVersion "2.9"
@@ -42,9 +42,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; Main application binaries and dependencies
 Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.pdb,*.lib,*.obj"
 
-; ONNX models and configs (shipped with installer)
-Source: "gui\models\*.onnx"; DestDir: "{app}\models"; Flags: ignoreversion; Check: ModelExists
-Source: "gui\models\*.yaml"; DestDir: "{app}\models"; Flags: ignoreversion; Check: ModelExists
+; ONNX models and configs (shipped with installer if present)
+Source: "gui\models\*.onnx"; DestDir: "{app}\models"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "gui\models\*.yaml"; DestDir: "{app}\models"; Flags: ignoreversion skipifsourcedoesntexist
 
 ; Application icon
 Source: "assets\media.ico"; DestDir: "{app}"; Flags: ignoreversion
@@ -56,9 +56,3 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilen
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
-
-[Code]
-function ModelExists: Boolean;
-begin
-  Result := FileExists(ExpandConstant('{src}\gui\models\lama_fp32.onnx'));
-end;

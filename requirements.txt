@@ -1,7 +1,7 @@
 # Prerequisites
-.NET 8.0 SDK or Runtime (Windows)
+.NET 8.0 SDK or Runtime (Windows 10/11 64-bit)
 
-# NuGet Dependencies (Autorestored on build)
+# NuGet Dependencies (Auto-restored on build)
 Microsoft.ML.OnnxRuntime (1.24.2)
 Microsoft.ML.OnnxRuntime.DirectML (1.24.2)
 Microsoft.ML.OnnxRuntime.Managed (1.24.2)
@@ -9,10 +9,18 @@ ModernWpfUI (0.9.6)
 OpenCvSharp4.Windows (4.9.0.20240103)
 System.Numerics.Tensors (10.0.2)
 
+# GPU Acceleration
+DirectML — Built-in, works with any GPU on Windows 10+. No extra install needed.
+CUDA — Requires NVIDIA GPU with drivers. Drivers are GPU-vendor supplied, not bundled.
+CPU — Always available as fallback.
+
 # External API Requirements (For Generative AI Features)
 Stable Diffusion WebUI (AUTOMATIC1111 or similar) running locally or remotely with the `--api` flag enabled.
 Default expected endpoint: http://127.0.0.1:7860/
+Required for: Generative Fill, Expand, Upscale, Sprite Generator.
+Download: https://github.com/AUTOMATIC1111/stable-diffusion-webui/releases
 
 # External Models
-- LaMa ONNX Model: Placed in models/lama_fp32.onnx or automatically downloaded.
+- LaMa ONNX Model: Place in models/lama_fp32.onnx (next to the application executable).
 - Segment Anything Model (SAM) ONNX: Encoder and Decoder models placed in models/ directory.
+- Custom model directory can be set in Settings → Model Directory.

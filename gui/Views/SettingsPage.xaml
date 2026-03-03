@@ -61,6 +61,17 @@
                     </ComboBox>
                 </StackPanel>
                 <TextBlock Text="Note: GPU execution requires appropriate CUDA/DirectML drivers installed."
+                           FontSize="10" Foreground="{StaticResource TextDimBrush}" Margin="180,0,0,8"
+                           FontFamily="Segoe UI"/>
+                <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                    <TextBlock Text="Model Directory:" VerticalAlignment="Center" Width="180"
+                               Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" FontSize="11"/>
+                    <TextBox x:Name="ModelDirectoryTextBox" Width="320" Style="{StaticResource HudTextBox}"/>
+                    <Button Content="BROWSE" Height="30" Margin="10,0,0,0"
+                            Style="{StaticResource BtnOutline}" Padding="12,0"
+                            Click="BrowseModelDir_Click"/>
+                </StackPanel>
+                <TextBlock Text="Leave empty to auto-detect. Models are searched in 'models/' next to the application."
                            FontSize="10" Foreground="{StaticResource TextDimBrush}" Margin="180,0,0,0"
                            FontFamily="Segoe UI"/>
             </StackPanel>

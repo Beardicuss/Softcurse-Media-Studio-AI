@@ -59,8 +59,9 @@ namespace GeminiWatermarkRemover
             // 2. Stable release layout: models/ next to exe
             candidates.Add(Path.Combine(exeDir, "models"));
 
-            // 3. Dev layout: three levels up from bin/Debug/net8.0/
+            // 3. Dev layout: gui/models/ relative to solution root
             candidates.Add(Path.Combine(exeDir, "..", "..", "..", "models"));
+            candidates.Add(Path.Combine(exeDir, "..", "..", "..", "gui", "models"));
 
             return candidates.ToArray();
         }
