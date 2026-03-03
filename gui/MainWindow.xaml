@@ -6,6 +6,7 @@
         ui:ThemeManager.RequestedTheme="Dark"
         Style="{StaticResource CyberWindowStyle}"
         Title="Softcurse Media Studio AI"
+        Icon="/assets/logo.png"
         Height="820" Width="1340"
         MinHeight="650" MinWidth="1000"
         WindowStartupLocation="CenterScreen">
@@ -50,6 +51,7 @@
 
     <!-- Root grid with grid overlay -->
     <Grid>
+        
         <!-- Background layers -->
         <Grid>
             <Grid.Background>
@@ -109,22 +111,35 @@
                         <!-- Logo / app identity -->
                         <Border Grid.Row="0" Padding="12,16,12,12"
                                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
-                            <StackPanel>
-                                <TextBlock Text="SOFTCURSE" FontSize="9" FontWeight="Bold"
-                                           Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
-                                <TextBlock Text="MEDIA STUDIO" FontSize="11" FontWeight="Bold"
-                                           Foreground="{StaticResource CyberAccentBrush}" HorizontalAlignment="Center">
-                                    <TextBlock.Effect>
-                                        <DropShadowEffect Color="#00E5FF" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
-                                    </TextBlock.Effect>
-                                </TextBlock>
-                                <TextBlock Text="AI" FontSize="22" FontWeight="Bold"
-                                           Foreground="{StaticResource CyberAccentBrush}" HorizontalAlignment="Center" Margin="0,-4,0,0">
-                                    <TextBlock.Effect>
-                                        <DropShadowEffect Color="#00E5FF" BlurRadius="14" ShadowDepth="0" Opacity="0.8"/>
-                                    </TextBlock.Effect>
-                                </TextBlock>
-                            </StackPanel>
+                            <Grid>
+                                <!-- Main logo image -->
+                                <Image x:Name="LogoImage"
+                                       Source="pack://application:,,,/../../assets/logo.png"
+                                       Height="130"
+                                       Stretch="Uniform"
+                                       RenderOptions.BitmapScalingMode="HighQuality">
+                                    <Image.RenderTransform>
+                                        <TranslateTransform x:Name="GlitchTranslate1" X="0" Y="0"/>
+                                    </Image.RenderTransform>
+                                    <Image.Effect>
+                                        <DropShadowEffect Color="#00E5FF" BlurRadius="10" ShadowDepth="0" Opacity="0.8"/>
+                                    </Image.Effect>
+                                </Image>
+                                <!-- Red chromatic ghost -->
+                                <Image x:Name="LogoImageRed"
+                                       Source="pack://application:,,,/../../assets/logo.png"
+                                       Height="130"
+                                       Stretch="Uniform"
+                                       Opacity="0"
+                                       IsHitTestVisible="False">
+                                    <Image.RenderTransform>
+                                        <TranslateTransform x:Name="GlitchRed1" X="0" Y="0"/>
+                                    </Image.RenderTransform>
+                                    <Image.Effect>
+                                        <DropShadowEffect Color="#FF0040" BlurRadius="0" ShadowDepth="0" Opacity="1"/>
+                                    </Image.Effect>
+                                </Image>
+                            </Grid>
                         </Border>
 
                         <!-- Nav items -->

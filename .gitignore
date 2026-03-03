@@ -112,8 +112,14 @@ temp/
 
 # Inno Setup output
 installer/
+[Ii]nstaller/
 
 # Build artifacts and publish results
 publish/
+[Pp]ublish/
+[Bb]uild/
 [Bb]in/
 [Oo]bj/
+[Bb]ld/
+[Ww]in-x64/
+[Ww]in-x86/

@@ -2,7 +2,7 @@
 ; Created: 2026-03-03
 
 #define MyAppName "Softcurse Media Studio AI"
-#define MyAppVersion "2.8"
+#define MyAppVersion "2.9"
 #define MyAppPublisher "Softcurse"
 #define MyAppURL "https://github.com/Beardicuss/Softcurse-Media-Studio-AI"
 #define MyAppExeName "SoftcurseMediaStudioAI.exe"
@@ -39,19 +39,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-; Main application executable
-Source: "publish\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+; Main application binaries and dependencies
+Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.pdb,*.lib,*.obj"
 
-; Runtime DLLs
-Source: "publish\DirectML.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "publish\DirectML.Debug.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "publish\onnxruntime.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "publish\onnxruntime_providers_shared.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "publish\OpenCvSharpExtern.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "publish\opencv_videoio_ffmpeg490_64.dll"; DestDir: "{app}"; Flags: ignoreversion
-
-; ONNX models (shipped with installer)
+; ONNX models and configs (shipped with installer)
 Source: "gui\models\*.onnx"; DestDir: "{app}\models"; Flags: ignoreversion; Check: ModelExists
+Source: "gui\models\*.yaml"; DestDir: "{app}\models"; Flags: ignoreversion; Check: ModelExists
 
 ; Application icon
 Source: "assets\media.ico"; DestDir: "{app}"; Flags: ignoreversion

@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace GeminiWatermarkRemover
 {
@@ -34,7 +36,11 @@ namespace GeminiWatermarkRemover
             ContentFrame.Navigate(_imageEditorPage);
 
             // Animate sidebar icons after layout is ready
-            Loaded += (_, __) => StartSidebarAnimations();
+            Loaded += (_, __) => 
+            {
+                StartSidebarAnimations();
+                StartLogoGlitch();
+            };
         }
 
         // ── SIDEBAR ICON ANIMATIONS (matching softcurse-full-app.html) ──
@@ -168,6 +174,49 @@ namespace GeminiWatermarkRemover
 
             // Set selected
             selectedBtn.Style = (Style)FindResource("NavItemSelectedStyle");
+        }
+
+        private void StartLogoGlitch()
+        {
+            var timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromSeconds(3.5);
+            timer.Tick += (s, e) =>
+            {
+                // Random chance to trigger glitch
+                if (new Random().NextDouble() > 0.4) return;
+                RunGlitchSequence();
+            };
+            timer.Start();
+        }
+
+        private async void RunGlitchSequence()
+        {
+            var rng = new Random();
+            int frames = rng.Next(3, 7);
+
+            for (int i = 0; i < frames; i++)
+            {
+                double shiftX = rng.NextDouble() * 8 - 4;
+                double shiftY = rng.NextDouble() * 2 - 1;
+
+                GlitchTranslate1.X = shiftX;
+                GlitchTranslate1.Y = shiftY;
+                GlitchRed1.X = shiftX + rng.NextDouble() * 5;
+                GlitchRed1.Y = shiftY;
+
+                LogoImage.Opacity = rng.NextDouble() * 0.5 + 0.5;
+                LogoImageRed.Opacity = 0.35;
+
+                await Task.Delay(rng.Next(30, 90));
+            }
+
+            // Snap back
+            GlitchTranslate1.X = 0;
+            GlitchTranslate1.Y = 0;
+            GlitchRed1.X = 0;
+            GlitchRed1.Y = 0;
+            LogoImage.Opacity = 1.0;
+            LogoImageRed.Opacity = 0;
         }
     }
 }

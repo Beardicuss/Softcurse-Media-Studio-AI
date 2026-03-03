@@ -6,7 +6,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ui:ThemeResources />
+                <ui:ThemeResources RequestedTheme="Dark" />
                 <ui:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
 
@@ -191,7 +191,7 @@
 
             <!-- ── COMBO BOX ───────────────────────────────────────────── -->
             <Style x:Key="HudComboBox" TargetType="ComboBox">
-                <Setter Property="Background"      Value="#0A1520"/>
+                <Setter Property="Background"      Value="{DynamicResource ComboBoxBackground}"/>
                 <Setter Property="Foreground"      Value="{StaticResource CyberAccentBrush}"/>
                 <Setter Property="BorderBrush"     Value="{StaticResource BorderBrightBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
