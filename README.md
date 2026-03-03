@@ -1,5 +1,7 @@
 # Softcurse Media Studio AI
 
+![Softcurse Media Studio AI](assets/media.png)
+
 A powerful, hardware-accelerated Windows WPF application designed for advanced image manipulation, AI-powered object removal, and generative expansion.
 
 ## Features
