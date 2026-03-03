@@ -26,7 +26,7 @@ namespace GeminiWatermarkRemover.Views
             {
                 ApiEndpointTextBox.Text = "http://127.0.0.1:7860/";
             }
-            ExecutionProviderCombo.SelectedIndex = 0;
+            ExecutionProviderCombo.SelectedIndex = AppSettings.ExecutionProvider;
         }
 
         private void BrowseOutput_Click(object sender, RoutedEventArgs e)
@@ -42,9 +42,10 @@ namespace GeminiWatermarkRemover.Views
         {
             AppSettings.DefaultOutputFolder = DefaultOutputTextBox.Text;
             AppSettings.ApiEndpoint = ApiEndpointTextBox.Text;
-            AppSettings.Save();
-            
-            MessageBox.Show("Settings saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            AppSettings.ExecutionProvider = ExecutionProviderCombo.SelectedIndex;
+            AppSettings.Save(); // Single write to disk
+
+            DarkMessageBox.Show("Settings saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }

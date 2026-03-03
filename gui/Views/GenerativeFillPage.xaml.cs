@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,6 +16,7 @@ namespace GeminiWatermarkRemover.Views
         private static readonly HttpClient _httpClient = new HttpClient();
         private string _imagePath;
         private byte[]? _maskBytes;
+        private CancellationTokenSource? _cts;
 
         public string? ResultImagePath { get; private set; }
 
@@ -25,39 +27,47 @@ namespace GeminiWatermarkRemover.Views
             _maskBytes = maskBytes;
         }
 
+        /// <summary>
+        /// Allows MainWindow or ImageEditorPage to pass the current image to this page.
+        /// </summary>
+        public void SetImage(string imagePath, byte[]? maskBytes = null)
+        {
+            _imagePath = imagePath;
+            _maskBytes = maskBytes;
+        }
+
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            // DialogResult = false;
-            // Close();
+            _cts?.Cancel();
+            GenerateButton.IsEnabled = true;
         }
 
         private async void Generate_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_imagePath))
             {
-                MessageBox.Show("Please load an image into the editor first before attempting Generative Fill.", "Missing Image", MessageBoxButton.OK, MessageBoxImage.Warning);
+                DarkMessageBox.Show("Please load an image into the Image Editor first, then navigate to this tab.\n\nThe AI Generation Hub uses the currently loaded image from the editor.", "Missing Image", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             GenerateButton.IsEnabled = false;
-            
+            _cts = new CancellationTokenSource();
+
             string prompt = PromptTextBox.Text;
             string negativePrompt = NegativePromptTextBox.Text;
             string apiUrl = AppSettings.ApiEndpoint;
-            
-            if (string.IsNullOrWhiteSpace(apiUrl))
+
+            // F-04: validate URL before making any network request
+            if (!AppSettings.IsApiEndpointSafe(apiUrl, out string genUrlError))
             {
-                Dispatcher.Invoke(() => {
-                    MessageBox.Show("Generative Fill pipeline failed: API Endpoint is empty. Please set a valid Stable Diffusion API URL in the Settings menu.", "Connection Refused", MessageBoxButton.OK, MessageBoxImage.Warning);
-                });
+                DarkMessageBox.Show($"Generative Fill API endpoint is invalid:\n{genUrlError}\n\nPlease update it in Settings.", "Invalid API Endpoint", MessageBoxButton.OK, MessageBoxImage.Warning);
                 GenerateButton.IsEnabled = true;
                 return;
             }
-            
-            // Route to img2img specifically if it's just the base URL
-            if (!apiUrl.EndsWith("/")) apiUrl += "/";
-            string generativeApiUrl = apiUrl + "sdapi/v1/img2img";
-            
+
+            // Build the correct img2img URL — avoid double-appending
+            string generativeApiUrl = BuildApiUrl(apiUrl, "sdapi/v1/img2img");
+
             try
             {
                 string base64Image = Convert.ToBase64String(File.ReadAllBytes(_imagePath));
@@ -85,9 +95,8 @@ namespace GeminiWatermarkRemover.Views
                 string jsonPayload = JsonSerializer.Serialize(payload, jsonOptions);
                 var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-                // Note: This will throw if the API is not running locally (intended)
-                HttpResponseMessage response = await _httpClient.PostAsync(generativeApiUrl, content);
-                
+                HttpResponseMessage response = await _httpClient.PostAsync(generativeApiUrl, content, _cts.Token);
+
                 if (response.IsSuccessStatusCode)
                 {
                     string responseBody = await response.Content.ReadAsStringAsync();
@@ -96,31 +105,52 @@ namespace GeminiWatermarkRemover.Views
                     {
                         string returningBase64 = imagesElement[0].GetString()!;
                         byte[] returningBytes = Convert.FromBase64String(returningBase64);
-                        
+
                         string tempFile = Path.Combine(Path.GetTempPath(), $"genfill_{Guid.NewGuid()}.png");
                         File.WriteAllBytes(tempFile, returningBytes);
                         TempFileManager.RegisterTempFile(tempFile);
-                        
+
                         ResultImagePath = tempFile;
-                        // DialogResult = true;
-                        // Close();
-                        MessageBox.Show("Generation Complete!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                        DarkMessageBox.Show("Generation Complete! Result saved.\nSwitch to Image Editor to see the result.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        // Navigate back to Image Editor with the result
+                        var mainWindow = Application.Current.MainWindow as MainWindow;
+                        mainWindow?.OpenImageInEditor(tempFile);
                         return;
                     }
                 }
                 else
                 {
-                    MessageBox.Show($"API Error: {response.StatusCode}\nEnsure Stable Diffusion is running with --api.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    DarkMessageBox.Show($"API Error: {response.StatusCode}\nEnsure Stable Diffusion is running with --api.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                // Cancelled by user
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Could not connect to API: {ex.Message}\n\nPlease ensure you have Stable Diffusion WebUI running locally with the '--api' flag enabled.", "Connection Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+                DarkMessageBox.Show($"Could not connect to API: {ex.Message}\n\nPlease ensure you have Stable Diffusion WebUI running locally with the '--api' flag enabled.", "Connection Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             finally
             {
                 GenerateButton.IsEnabled = true;
+                _cts?.Dispose();
+                _cts = null;
             }
+        }
+
+        /// <summary>
+        /// Builds the full API URL, avoiding double-appending the path segment.
+        /// </summary>
+        private static string BuildApiUrl(string baseUrl, string apiPath)
+        {
+            // If the base URL already contains the specific API path, use it as-is
+            if (baseUrl.Contains(apiPath, StringComparison.OrdinalIgnoreCase))
+                return baseUrl;
+
+            if (!baseUrl.EndsWith("/")) baseUrl += "/";
+            return baseUrl + apiPath;
         }
     }
 }

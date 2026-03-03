@@ -2,122 +2,440 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.modernwpf.com/2019"
-             PreviewKeyDown="UserControl_PreviewKeyDown">
-    <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-    </UserControl.Resources>
-    
-    <Grid>
+             PreviewKeyDown="UserControl_PreviewKeyDown"
+             Background="Transparent">
 
-        
-        <Grid Margin="20">
-            <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <!-- Title -->
-            <RowDefinition Height="Auto"/> <!-- Controls -->
-            <RowDefinition Height="*"/>    <!-- Image -->
-            <RowDefinition Height="Auto"/> <!-- Status -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- Toolbar row -->
+            <RowDefinition Height="*"/>     <!-- Canvas row -->
+            <RowDefinition Height="Auto"/>  <!-- Status / tools row -->
         </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Text="SOFTCURSE MEDIA STUDIO AI" FontSize="26" FontWeight="Bold" Margin="0,0,0,20" HorizontalAlignment="Center" Foreground="{StaticResource CyberAccentBrush}">
-                <TextBlock.Effect>
-                    <DropShadowEffect Color="#00FFFF" BlurRadius="15" ShadowDepth="0" />
-                </TextBlock.Effect>
-            </TextBlock>
-
-        <!-- Controls -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
-            
-            <TextBlock Text="MODE:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{StaticResource CyberAccentBrush}" />
-            <ComboBox x:Name="ToolComboBox" Margin="0,0,10,0" Width="150" SelectedIndex="0" SelectionChanged="ToolComboBox_SelectionChanged" BorderBrush="{StaticResource CyberAccentBrush}" BorderThickness="1">
-                <ComboBoxItem Content="AUTO MODE" />
-                <ComboBoxItem Content="CYBER BRUSH" />
-                <ComboBoxItem Content="ERASER" />
-                <ComboBoxItem Content="POLY LASSO" />
-                <ComboBoxItem Content="MAGIC WAND" />
-            </ComboBox>
-
-            <StackPanel x:Name="BrushSizePanel" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0" Visibility="Collapsed">
-                <TextBlock Text="SIZE:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{StaticResource CyberAccentBrush}"/>
-                <Slider x:Name="BrushSizeSlider" Minimum="5" Maximum="100" Value="20" Width="100" VerticalAlignment="Center" ValueChanged="BrushSize_ValueChanged"/>
-            </StackPanel>
-            
-            <Button Content="CLEAR MASK" x:Name="ClearMaskButton" Visibility="Collapsed" Width="90" Height="30" Margin="0,0,10,0" Click="ClearMask_Click" BorderBrush="{StaticResource CyberMagentaBrush}" Foreground="{StaticResource CyberMagentaBrush}" BorderThickness="1" Background="Transparent" />
-            <Button x:Name="ResetButton" Content="RESET" Width="50" Height="30" Margin="0,0,10,0" Click="Reset_Click" Background="{StaticResource CyberMagentaBrush}" Foreground="#020202" FontWeight="Bold" BorderThickness="0"/>
-            
-            <!-- The 4 Core Pixa Tools -->
-            <Button x:Name="BackgroundButton" Content="BACKGROUND" Width="120" Height="30" Margin="0,0,10,0" Click="RemoveBackground_Click" BorderBrush="{StaticResource CyberMagentaBrush}" Foreground="{StaticResource CyberMagentaBrush}" BorderThickness="1" Background="Transparent" IsEnabled="False"/>
-            <Button x:Name="RetouchButton" Content="APPLY MASK (RETOUCH)" Width="190" Height="30" Margin="0,0,10,0" Click="RemoveWatermark_Click" ui:ControlHelper.CornerRadius="0" Background="{StaticResource CyberAccentBrush}" Foreground="#020202" FontWeight="Bold" IsEnabled="False">
-                <Button.Effect>
-                    <DropShadowEffect Color="#00FFFF" BlurRadius="10" ShadowDepth="0" />
-                </Button.Effect>
-            </Button>
-            <Button x:Name="ExpandButton" Content="EXPAND" Width="100" Height="30" Margin="0,0,10,0" Click="Expand_Click" BorderBrush="{StaticResource CyberSecondaryBrush}" Foreground="{StaticResource CyberSecondaryBrush}" BorderThickness="1" Background="Transparent" IsEnabled="False"/>
-            <Button x:Name="UpscaleButton" Content="UPSCALE" Width="100" Height="30" Margin="0,0,10,0" Click="Upscale_Click" IsEnabled="False" BorderBrush="{StaticResource CyberSecondaryBrush}" Foreground="{StaticResource CyberSecondaryBrush}" BorderThickness="1" Background="Transparent"/>
-
-            <Button x:Name="CopyButton" Content="COPY" ToolTip="Ctrl+C" Width="50" Height="30" Margin="0,0,10,0" Click="Copy_Click" BorderBrush="{StaticResource CyberSecondaryBrush}" Foreground="{StaticResource CyberSecondaryBrush}" BorderThickness="1" Background="Transparent" IsEnabled="False"/>
-            <Button x:Name="SaveButton" Content="SAVE" Width="60" Height="30" Click="Save_Click" Background="{StaticResource CyberSecondaryBrush}" Foreground="#020202" FontWeight="Bold" BorderThickness="0" IsEnabled="False">
-                <Button.Effect>
-                    <DropShadowEffect Color="#0088FF" BlurRadius="10" ShadowDepth="0" />
-                </Button.Effect>
-            </Button>
-            <ToggleButton x:Name="CompareToggleButton" Content="COMPARE" Width="80" Height="30" Margin="10,0,0,0" Checked="Compare_Checked" Unchecked="Compare_Unchecked" IsEnabled="False" BorderBrush="{StaticResource CyberAccentBrush}" Foreground="{StaticResource CyberAccentBrush}" BorderThickness="1" Background="Transparent"/>
-        </StackPanel>
-
-        <!-- Image Display with Zoom -->
-        <Border Grid.Row="2" BorderBrush="{StaticResource CyberAccentBrush}" BorderThickness="1" Margin="0,0,0,10" Background="#1100FFFF" CornerRadius="0" ClipToBounds="True">
-            <Border.Effect>
-                <DropShadowEffect Color="#00FFFF" BlurRadius="20" ShadowDepth="0" Opacity="0.5"/>
-            </Border.Effect>
+        <!-- ── ROW 0: TOOLBAR ──────────────────────────────────────────── -->
+        <Border Grid.Row="0" Background="#07101A"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1"
+                Padding="12,8">
             <Grid>
-                <ScrollViewer x:Name="ImageScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" PanningMode="Both">
-                    <Grid x:Name="ImageContainer" HorizontalAlignment="Center" VerticalAlignment="Center" SizeChanged="ImageContainer_SizeChanged">
-                        <Grid.LayoutTransform>
-                            <ScaleTransform x:Name="ImageScaleTransform" ScaleX="1" ScaleY="1"/>
-                        </Grid.LayoutTransform>
-                        <Image x:Name="OriginalImageDisplay" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality" Visibility="Collapsed"/>
-                        <Image x:Name="ImageDisplay" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality">
-                            <Image.Clip>
-                                <RectangleGeometry x:Name="ImageClipGeometry" />
-                            </Image.Clip>
-                        </Image>
-                        <Grid x:Name="MaskingContainer" Background="Transparent" Visibility="Visible">
-                            <InkCanvas x:Name="ManualInkCanvas" Background="Transparent" Visibility="Collapsed">
-                                <InkCanvas.DefaultDrawingAttributes>
-                                    <DrawingAttributes Color="#80FF0000" Width="20" Height="20" FitToCurve="True"/>
-                                </InkCanvas.DefaultDrawingAttributes>
-                            </InkCanvas>
-                            <Canvas x:Name="PolygonCanvas" Background="Transparent" Visibility="Collapsed" 
-                                    MouseLeftButtonDown="PolygonCanvas_MouseLeftButtonDown" 
-                                    MouseMove="PolygonCanvas_MouseMove" 
-                                    MouseRightButtonDown="PolygonCanvas_MouseRightButtonDown" />
-                            <Canvas x:Name="SamCanvas" Background="Transparent" Visibility="Collapsed" 
-                                    MouseLeftButtonDown="SamCanvas_MouseLeftButtonDown" />
-                        </Grid>
-                        
-                        <!-- Invisible slider that captures mouse logic but has a visible thumb line -->
-                        <!-- Constraining vertical alignment so it doesn't block the entire canvas height from mouse events -->
-                        <Slider x:Name="CompareSlider" Minimum="0" Maximum="1" Value="0.5" Visibility="Collapsed" 
-                                VerticalAlignment="Center" Height="50" HorizontalAlignment="Stretch" 
-                                ValueChanged="CompareSlider_ValueChanged"
-                                Opacity="0.7"/>
-                    </Grid>
-                </ScrollViewer>
-                
-                <!-- Drop Zone Overlay -->
-                <StackPanel x:Name="DropZone" Background="Transparent" AllowDrop="True" Drop="DropZone_Drop" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False">
-                    <TextBlock Text="Drag and Drop Image Here" Foreground="#555" FontSize="18" HorizontalAlignment="Center"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: MODE selector -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="MODE" VerticalAlignment="Center" Margin="0,0,8,0"
+                               Foreground="{StaticResource TextDimBrush}" FontSize="10"
+                               FontFamily="Segoe UI" FontWeight="Bold"/>
+                    <ComboBox x:Name="ToolComboBox" Width="145" Height="30" SelectedIndex="0"
+                              SelectionChanged="ToolComboBox_SelectionChanged"
+                              Style="{StaticResource HudComboBox}">
+                        <ComboBoxItem Content="AUTO MODE" />
+                        <ComboBoxItem Content="CYBER BRUSH" />
+                        <ComboBoxItem Content="ERASER" />
+                        <ComboBoxItem Content="POLY LASSO" />
+                        <ComboBoxItem Content="MAGIC WAND" />
+                    </ComboBox>
+
+                    <!-- Separator pip -->
+                    <Rectangle Width="1" Height="20" Fill="{StaticResource BorderBrush}" Margin="12,0"/>
+
+                    <!-- Mini square icon button (mode extra info) -->
+                    <Button x:Name="ModeInfoButton" Width="30" Height="30" Margin="0,0,8,0"
+                            Style="{StaticResource BtnOutline}" Padding="0">
+                        <TextBlock Text="⬡" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="{StaticResource CyberAccentBrush}"/>
+                    </Button>
+                </StackPanel>
+
+                <!-- Center: Core action buttons -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+
+                    <Button x:Name="BackgroundButton" Content="BACKGROUND" Height="30" Margin="0,0,6,0"
+                            Style="{StaticResource BtnOutline}" Padding="14,0"
+                            Click="RemoveBackground_Click" IsEnabled="False"/>
+
+                    <Button x:Name="RetouchButton" Content="APPLY MASK (RETOUCH)" Height="30" Margin="0,0,6,0"
+                            Style="{StaticResource BtnPrimary}" Padding="14,0"
+                            Click="RemoveWatermark_Click" IsEnabled="False"/>
+
+                    <Button x:Name="ExpandButton" Content="EXPAND" Height="30" Margin="0,0,6,0"
+                            Style="{StaticResource BtnOutline}" Padding="14,0"
+                            Click="Expand_Click" IsEnabled="False"/>
+
+                    <Button x:Name="UpscaleButton" Content="UPSCALE" Height="30" Margin="0,0,6,0"
+                            Style="{StaticResource BtnOutline}" Padding="14,0"
+                            Click="Upscale_Click" IsEnabled="False"/>
+
+                </StackPanel>
+
+                <!-- Right: Save / Copy / Compare / Reset -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+
+                    <Button x:Name="CopyButton" Content="COPY" Height="30" Margin="0,0,6,0"
+                            Style="{StaticResource BtnOutline}" Padding="12,0"
+                            Click="Copy_Click" IsEnabled="False" ToolTip="Ctrl+C"/>
+
+                    <Button x:Name="SaveButton" Content="SAVE" Height="30" Margin="0,0,6,0"
+                            Style="{StaticResource BtnOutline}" Padding="12,0"
+                            Click="Save_Click" IsEnabled="False"/>
+
+                    <ToggleButton x:Name="CompareToggleButton" Content="COMPARE" Height="30" Margin="0,0,6,0"
+                                  Style="{StaticResource ToggleOutline}" Padding="12,0"
+                                  Checked="Compare_Checked" Unchecked="Compare_Unchecked" IsEnabled="False"/>
+
+                    <Rectangle Width="1" Height="20" Fill="{StaticResource BorderBrush}" Margin="4,0,8,0"/>
+
+                    <Button x:Name="ResetButton" Content="RESET" Height="30"
+                            Style="{StaticResource BtnDanger}" Padding="12,0"
+                            Click="Reset_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Status Bar -->
-        <Grid Grid.Row="3">
-            <TextBlock x:Name="StatusText" Text="SYSTEM READY..." Foreground="{StaticResource CyberAccentBrush}" HorizontalAlignment="Left" FontWeight="SemiBold"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="LOAD IMAGE" Width="100" Height="30" Margin="0,0,10,0" Click="SelectImage_Click" BorderBrush="{StaticResource CyberMagentaBrush}" Foreground="{StaticResource CyberMagentaBrush}" BorderThickness="1" Background="Transparent" />
-                <TextBlock Text="CTRL + MOUSE WHEEL = ZOOM" Foreground="{StaticResource CyberSecondaryBrush}" VerticalAlignment="Center"/>
+        <!-- ── ROW 1: IMAGE CANVAS ─────────────────────────────────────── -->
+        <Grid Grid.Row="1" Margin="12,10,12,10">
+
+            <!-- Brush size panel (hidden unless brush/eraser tool active) -->
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Brush controls bar -->
+            <StackPanel x:Name="BrushSizePanel" Grid.Row="0" Orientation="Horizontal"
+                        Margin="0,0,0,6" Visibility="Collapsed">
+                <TextBlock Text="BRUSH SIZE" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Foreground="{StaticResource TextDimBrush}" FontSize="10" FontFamily="Segoe UI" FontWeight="Bold"/>
+                <Slider x:Name="BrushSizeSlider" Minimum="5" Maximum="100" Value="20" Width="130"
+                        VerticalAlignment="Center" ValueChanged="BrushSize_ValueChanged"
+                        Foreground="{StaticResource CyberAccentBrush}"/>
+                <TextBlock Text="|" Margin="12,0" Foreground="{StaticResource BorderBrush}" VerticalAlignment="Center"/>
+                <Button x:Name="ClearMaskButton" Content="CLEAR MASK" Height="26"
+                        Style="{StaticResource BtnDanger}" Padding="10,0"
+                        Click="ClearMask_Click" Visibility="Collapsed"/>
             </StackPanel>
+
+            <!-- HUD canvas frame -->
+            <Border Grid.Row="1" x:Name="CanvasFrame"
+                    BorderBrush="{StaticResource BorderBrightBrush}" BorderThickness="1"
+                    Background="#050C13" ClipToBounds="True">
+                <Border.Effect>
+                    <DropShadowEffect Color="#00E5FF" BlurRadius="24" ShadowDepth="0" Opacity="0.25"/>
+                </Border.Effect>
+
+                <Grid>
+                    <!-- Inner scan-line overlay (very subtle) -->
+                    <Rectangle IsHitTestVisible="False" Opacity="0.04">
+                        <Rectangle.Fill>
+                            <DrawingBrush Viewport="0,0,1,3" ViewportUnits="Absolute" TileMode="Tile">
+                                <DrawingBrush.Drawing>
+                                    <GeometryDrawing>
+                                        <GeometryDrawing.Geometry>
+                                            <RectangleGeometry Rect="0,0,1,1"/>
+                                        </GeometryDrawing.Geometry>
+                                        <GeometryDrawing.Brush>
+                                            <SolidColorBrush Color="#00AAFF"/>
+                                        </GeometryDrawing.Brush>
+                                    </GeometryDrawing>
+                                </DrawingBrush.Drawing>
+                            </DrawingBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+
+                    <!-- Main scrollable image area -->
+                    <ScrollViewer x:Name="ImageScrollViewer"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto"
+                                  PanningMode="Both"
+                                  AllowDrop="True" Drop="DropZone_Drop">
+                        <Grid x:Name="ImageContainer"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              SizeChanged="ImageContainer_SizeChanged">
+                            <Grid.LayoutTransform>
+                                <ScaleTransform x:Name="ImageScaleTransform" ScaleX="1" ScaleY="1"/>
+                            </Grid.LayoutTransform>
+
+                            <Image x:Name="OriginalImageDisplay" Stretch="None"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   Visibility="Collapsed"/>
+                            <Image x:Name="ImageDisplay" Stretch="None"
+                                   RenderOptions.BitmapScalingMode="HighQuality">
+                                <Image.Clip>
+                                    <RectangleGeometry x:Name="ImageClipGeometry"/>
+                                </Image.Clip>
+                            </Image>
+
+                            <!-- Masking layers -->
+                            <Grid x:Name="MaskingContainer" Background="Transparent">
+                                <InkCanvas x:Name="ManualInkCanvas" Background="Transparent" Visibility="Collapsed">
+                                    <InkCanvas.DefaultDrawingAttributes>
+                                        <DrawingAttributes Color="#CC00AAFF" Width="20" Height="20" FitToCurve="True"/>
+                                    </InkCanvas.DefaultDrawingAttributes>
+                                </InkCanvas>
+                                <Canvas x:Name="PolygonCanvas" Background="Transparent" Visibility="Collapsed"
+                                        MouseLeftButtonDown="PolygonCanvas_MouseLeftButtonDown"
+                                        MouseMove="PolygonCanvas_MouseMove"
+                                        MouseRightButtonDown="PolygonCanvas_MouseRightButtonDown"/>
+                                <Canvas x:Name="SamCanvas" Background="Transparent" Visibility="Collapsed"
+                                        MouseLeftButtonDown="SamCanvas_MouseLeftButtonDown"/>
+                            </Grid>
+
+                            <!-- Compare slider -->
+                            <Slider x:Name="CompareSlider" Minimum="0" Maximum="1" Value="0.5"
+                                    Visibility="Collapsed" VerticalAlignment="Center" Height="50"
+                                    HorizontalAlignment="Stretch" Opacity="0.7"
+                                    ValueChanged="CompareSlider_ValueChanged"
+                                    Foreground="{StaticResource CyberAccentBrush}"/>
+                        </Grid>
+                    </ScrollViewer>
+
+                    <!-- Drop zone overlay -->
+                    <StackPanel x:Name="DropZone" Background="Transparent"
+                                VerticalAlignment="Center" HorizontalAlignment="Center"
+                                IsHitTestVisible="False">
+                        <TextBlock Text="⬡" FontSize="40" HorizontalAlignment="Center"
+                                   Foreground="{StaticResource BorderBrightBrush}"/>
+                        <TextBlock Text="DROP IMAGE HERE" FontSize="14" FontWeight="Bold"
+                                   HorizontalAlignment="Center" Margin="0,8,0,4"
+                                   Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"/>
+                        <TextBlock Text="or use LOAD IMAGE below" FontSize="11"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{StaticResource BorderBrightBrush}" FontFamily="Segoe UI"/>
+                    </StackPanel>
+
+                    <!-- HUD corner brackets overlay on canvas -->
+                    <Canvas IsHitTestVisible="False">
+                        <!-- TL -->
+                        <Rectangle Canvas.Left="0"  Canvas.Top="0"  Width="20" Height="1.5" Fill="{StaticResource CyberAccentBrush}" Opacity="0.6"/>
+                        <Rectangle Canvas.Left="0"  Canvas.Top="0"  Width="1.5" Height="20" Fill="{StaticResource CyberAccentBrush}" Opacity="0.6"/>
+                        <!-- TR -->
+                        <Rectangle Canvas.Right="0" Canvas.Top="0"  Width="20" Height="1.5" Fill="{StaticResource CyberAccentBrush}" Opacity="0.6" HorizontalAlignment="Right"/>
+                        <Rectangle Canvas.Right="0" Canvas.Top="0"  Width="1.5" Height="20" Fill="{StaticResource CyberAccentBrush}" Opacity="0.6" HorizontalAlignment="Right"/>
+                        <!-- BL -->
+                        <Rectangle Canvas.Left="0"  Canvas.Bottom="0" Width="20" Height="1.5" Fill="{StaticResource CyberAccentBrush}" Opacity="0.6" VerticalAlignment="Bottom"/>
+                        <Rectangle Canvas.Left="0"  Canvas.Bottom="0" Width="1.5" Height="20" Fill="{StaticResource CyberAccentBrush}" Opacity="0.6" VerticalAlignment="Bottom"/>
+                        <!-- BR -->
+                        <Rectangle Canvas.Right="0" Canvas.Bottom="0" Width="20" Height="1.5" Fill="{StaticResource CyberAccentBrush}" Opacity="0.6" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                        <Rectangle Canvas.Right="0" Canvas.Bottom="0" Width="1.5" Height="20" Fill="{StaticResource CyberAccentBrush}" Opacity="0.6" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                    </Canvas>
+
+                    <!-- Top-right HUD mini readout -->
+                    <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top"
+                                Orientation="Horizontal" Margin="0,6,8,0" IsHitTestVisible="False">
+                        <TextBlock x:Name="ZoomReadout" Text="UTTo" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                   FontFamily="Consolas" Margin="0,0,8,0"/>
+                        <TextBlock x:Name="ResReadout" Text="USp" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                   FontFamily="Consolas"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
         </Grid>
-        </Grid>
+
+        <!-- ── ROW 2: BOTTOM STATUS + TOOL STRIP ───────────────────────── -->
+        <Border Grid.Row="2" Background="#07101A"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0"
+                Padding="12,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>    <!-- Status / sliders -->
+                    <ColumnDefinition Width="Auto"/> <!-- Tool icons -->
+                    <ColumnDefinition Width="Auto"/> <!-- Load + hint -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: API status + sliders -->
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- API status line -->
+                    <TextBlock x:Name="StatusText" Grid.Row="0"
+                               Text="SYSTEM READY"
+                               Foreground="{StaticResource CyberAccentBrush}"
+                               FontFamily="Consolas" FontSize="11"
+                               Margin="0,0,0,6"/>
+
+                    <!-- Auto Detail slider row -->
+                    <Grid Grid.Row="1" Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="40"/>
+                            <ColumnDefinition Width="30"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Auto Detail" FontSize="10"
+                                   Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"
+                                   FontFamily="Segoe UI"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="100" Value="50"
+                                Foreground="{StaticResource CyberAccentBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="50" FontSize="10" Foreground="{StaticResource TextDimBrush}"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Consolas"/>
+                        <TextBlock Grid.Column="3" Text="5" FontSize="10" Foreground="{StaticResource TextDimBrush}"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Consolas"/>
+                    </Grid>
+
+                    <!-- Feather Radius slider row -->
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="40"/>
+                            <ColumnDefinition Width="30"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Feather Radius" FontSize="10"
+                                   Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"
+                                   FontFamily="Segoe UI"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="100" Value="50"
+                                Foreground="{StaticResource CyberAccentBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="50" FontSize="10" Foreground="{StaticResource TextDimBrush}"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Consolas"/>
+                        <TextBlock Grid.Column="3" Text="4" FontSize="10" Foreground="{StaticResource TextDimBrush}"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Consolas"/>
+                    </Grid>
+                </Grid>
+
+                <!-- Center: Tool icon strip -->
+                <Border Grid.Column="1" Margin="16,0"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0"
+                        Padding="16,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                        <!-- AUTO tool -->
+                        <StackPanel Margin="0,0,12,0" Cursor="Hand"
+                                    MouseLeftButtonDown="ToolIcon_Auto_Click">
+                            <Border x:Name="AutoToolBorder" Background="#1500E5FF" BorderBrush="{StaticResource CyberAccentBrush}"
+                                    BorderThickness="1" Padding="6">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#00E5FF" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
+                                </Border.Effect>
+                                <Viewbox Width="28" Height="28">
+                                    <Canvas Width="30" Height="30">
+                                        <!-- Lightning bolt from softcurse-icons -->
+                                        <Polygon Points="8,4 22,4 18,14 24,14 14,27 10,17 4,17"
+                                                 Stroke="#00E5FF" StrokeThickness="1.2" Fill="#0A1830"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Border>
+                            <TextBlock Text="AUTO" FontSize="8" FontWeight="Bold" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI" Margin="0,3,0,0"/>
+                        </StackPanel>
+
+                        <!-- AUTO DETAIL sub-label -->
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                            <TextBlock Text="↺ AUTO DETAIL" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                       FontFamily="Segoe UI" FontWeight="Bold"/>
+                        </StackPanel>
+
+                        <!-- CYBER BRUSH -->
+                        <StackPanel Margin="0,0,12,0" Cursor="Hand"
+                                    MouseLeftButtonDown="ToolIcon_CyberBrush_Click">
+                            <Border x:Name="BrushToolBorder" Background="#07101A" BorderBrush="{StaticResource BorderBrightBrush}"
+                                    BorderThickness="1" Padding="6">
+                                <Viewbox Width="28" Height="28">
+                                    <Canvas Width="30" Height="30">
+                                        <!-- Brush from softcurse-icons: line + circle + sparkles -->
+                                        <Line X1="5" Y1="5" X2="20" Y2="20" Stroke="#00E5FF" StrokeThickness="2"/>
+                                        <Ellipse Canvas.Left="15" Canvas.Top="15" Width="10" Height="10"
+                                                 Stroke="#00E5FF" StrokeThickness="1.2" Fill="#0A1830"/>
+                                        <Line X1="22" Y1="22" X2="27" Y2="27" Stroke="#C8973A" StrokeThickness="1.5"/>
+                                        <Ellipse Canvas.Left="11" Canvas.Top="9" Width="3" Height="3" Fill="#00E5FF"/>
+                                        <Ellipse Canvas.Left="7" Canvas.Top="14" Width="2" Height="2" Fill="#00E5FF" Opacity="0.6"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Border>
+                            <TextBlock Text="CYBER BRUSH" FontSize="8" FontWeight="Bold" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,3,0,0"/>
+                        </StackPanel>
+
+                        <!-- ERASER -->
+                        <StackPanel Margin="0,0,12,0" Cursor="Hand"
+                                    MouseLeftButtonDown="ToolIcon_Eraser_Click">
+                            <Border x:Name="EraserToolBorder" Background="#07101A" BorderBrush="{StaticResource BorderBrightBrush}"
+                                    BorderThickness="1" Padding="6">
+                                <Viewbox Width="28" Height="28">
+                                    <Canvas Width="30" Height="30">
+                                        <!-- Eraser from softcurse-icons -->
+                                        <Rectangle Canvas.Left="5" Canvas.Top="10" Width="20" Height="12"
+                                                   Stroke="#00E5FF" StrokeThickness="1.2" Fill="#0A1830" RadiusX="2" RadiusY="2"/>
+                                        <Line X1="14" Y1="10" X2="14" Y2="22" Stroke="#00E5FF" StrokeThickness="1" Opacity="0.4"/>
+                                        <Line X1="5" Y1="22" X2="14" Y2="22" Stroke="#C8973A" StrokeThickness="2"/>
+                                        <Line X1="18" Y1="7" X2="25" Y2="14" Stroke="#00E5FF" StrokeThickness="1.2" Opacity="0.5"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Border>
+                            <TextBlock Text="ERASER" FontSize="8" FontWeight="Bold" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,3,0,0"/>
+                        </StackPanel>
+
+                        <!-- POLY LASSO -->
+                        <StackPanel Margin="0,0,12,0" Cursor="Hand"
+                                    MouseLeftButtonDown="ToolIcon_PolyLasso_Click">
+                            <Border x:Name="LassoToolBorder" Background="#07101A" BorderBrush="{StaticResource BorderBrightBrush}"
+                                    BorderThickness="1" Padding="6">
+                                <Viewbox Width="28" Height="28">
+                                    <Canvas Width="30" Height="30">
+                                        <!-- Poly Lasso from softcurse-icons -->
+                                        <Polyline Points="5,20 10,8 18,12 24,6 26,20 15,25"
+                                                  Stroke="#00E5FF" StrokeThickness="1.2" StrokeDashArray="3 2">
+                                            <Polyline.RenderTransform>
+                                                <TranslateTransform X="0" Y="0"/>
+                                            </Polyline.RenderTransform>
+                                        </Polyline>
+                                        <Ellipse Canvas.Left="4" Canvas.Top="19" Width="4" Height="4" Fill="#C8973A"/>
+                                        <Ellipse Canvas.Left="9" Canvas.Top="7" Width="3" Height="3" Fill="#00E5FF"/>
+                                        <Ellipse Canvas.Left="17" Canvas.Top="11" Width="3" Height="3" Fill="#00E5FF"/>
+                                        <Ellipse Canvas.Left="23" Canvas.Top="5" Width="3" Height="3" Fill="#00E5FF"/>
+                                        <Ellipse Canvas.Left="25" Canvas.Top="19" Width="3" Height="3" Fill="#00E5FF"/>
+                                        <Ellipse Canvas.Left="14" Canvas.Top="24" Width="3" Height="3" Fill="#00E5FF"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Border>
+                            <TextBlock Text="POLY LASSO" FontSize="8" FontWeight="Bold" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,3,0,0"/>
+                        </StackPanel>
+
+                        <!-- MAGIC WAND -->
+                        <StackPanel Margin="0,0,0,0" Cursor="Hand"
+                                    MouseLeftButtonDown="ToolIcon_MagicWand_Click">
+                            <Border x:Name="WandToolBorder" Background="#07101A" BorderBrush="{StaticResource BorderBrightBrush}"
+                                    BorderThickness="1" Padding="6">
+                                <Viewbox Width="28" Height="28">
+                                    <Canvas Width="30" Height="30">
+                                        <!-- Magic Wand from softcurse-icons -->
+                                        <Line X1="6" Y1="24" X2="20" Y2="10" Stroke="#00E5FF" StrokeThickness="1.8"/>
+                                        <!-- Sparkle cross -->
+                                        <Line X1="22" Y1="6" X2="22" Y2="10" Stroke="#C8973A" StrokeThickness="1.5"/>
+                                        <Line X1="20" Y1="8" X2="24" Y2="8" Stroke="#C8973A" StrokeThickness="1.5"/>
+                                        <!-- Extra sparkles -->
+                                        <Line X1="25" Y1="12" X2="27" Y2="14" Stroke="#00E5FF" StrokeThickness="1" Opacity="0.6"/>
+                                        <Line X1="17" Y1="5" X2="19" Y2="7" Stroke="#00E5FF" StrokeThickness="1" Opacity="0.6"/>
+                                        <Ellipse Canvas.Left="21" Canvas.Top="7" Width="3" Height="3" Fill="#C8973A"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Border>
+                            <TextBlock Text="MAGIC WAND" FontSize="8" FontWeight="Bold" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,3,0,0"/>
+                        </StackPanel>
+
+                    </StackPanel>
+                </Border>
+
+                <!-- Right: Load image + zoom hint -->
+                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                    <Button Content="LOAD IMAGE" Height="30" Margin="0,0,0,6"
+                            Style="{StaticResource BtnOutline}" Padding="14,0"
+                            Click="SelectImage_Click"/>
+                    <TextBlock Text="CTRL + LEFT MOUSE CLICK / SCROLL (×) SHIFT"
+                               FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                               FontFamily="Consolas" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+            </Grid>
+        </Border>
+
     </Grid>
 </UserControl>

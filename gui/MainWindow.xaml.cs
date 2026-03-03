@@ -1,5 +1,8 @@
+using System;
 using System.Windows;
-using ModernWpf.Controls;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 
 namespace GeminiWatermarkRemover
 {
@@ -9,8 +12,9 @@ namespace GeminiWatermarkRemover
         private Views.BatchProcessorPage? _batchPage;
         private Views.VideoLabPage? _videoPage;
         private Views.GenerativeFillPage? _genFillPage;
+        private Views.SpriteGeneratorPage? _spritePage;
         private Views.SettingsPage? _settingsPage;
-        
+
         private WatermarkService _sharedWatermarkService;
         private SamModelService _sharedSamService;
 
@@ -23,12 +27,67 @@ namespace GeminiWatermarkRemover
             // Start initializing the models in the background immediately
             System.Threading.Tasks.Task.Run(() => _sharedWatermarkService.Initialize());
             System.Threading.Tasks.Task.Run(() => _sharedSamService.InitializeAsync());
-            
+
             _imageEditorPage = new Views.ImageEditorPage(_sharedWatermarkService, _sharedSamService);
-            
+
             // Set default frame content
             ContentFrame.Navigate(_imageEditorPage);
-            NavView.SelectedItem = NavView.MenuItems[0];
+
+            // Animate sidebar icons after layout is ready
+            Loaded += (_, __) => StartSidebarAnimations();
+        }
+
+        // ── SIDEBAR ICON ANIMATIONS (matching softcurse-full-app.html) ──
+        private void StartSidebarAnimations()
+        {
+            // Image Editor: front frame opacity pulsing (3s cycle)
+            var iePulse = new DoubleAnimation(1, 0.4, TimeSpan.FromSeconds(1.5))
+            {
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            IEFrame.BeginAnimation(OpacityProperty, iePulse);
+
+            // Mask Processor: outer ring rotation (3s), inner ring counter-rotation (2s)
+            var mpOuterSpin = new DoubleAnimation(0, 360, TimeSpan.FromSeconds(3))
+            {
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            MPOuterRotate.BeginAnimation(RotateTransform.AngleProperty, mpOuterSpin);
+
+            var mpInnerSpin = new DoubleAnimation(360, 0, TimeSpan.FromSeconds(2))
+            {
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            MPInnerRotate.BeginAnimation(RotateTransform.AngleProperty, mpInnerSpin);
+
+            // Video Lab: play triangle breathing scale (2s cycle)
+            var vlBreathX = new DoubleAnimation(1, 0.85, TimeSpan.FromSeconds(1))
+            {
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            var vlBreathY = new DoubleAnimation(1, 0.85, TimeSpan.FromSeconds(1))
+            {
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            VLPlayScale.BeginAnimation(ScaleTransform.ScaleXProperty, vlBreathX);
+            VLPlayScale.BeginAnimation(ScaleTransform.ScaleYProperty, vlBreathY);
+
+            // AI Generation Hub: core breathing scale (2s cycle)
+            var aiBreathX = new DoubleAnimation(1, 0.75, TimeSpan.FromSeconds(1))
+            {
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            var aiBreathY = new DoubleAnimation(1, 0.75, TimeSpan.FromSeconds(1))
+            {
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            AICoreScale.BeginAnimation(ScaleTransform.ScaleXProperty, aiBreathX);
+            AICoreScale.BeginAnimation(ScaleTransform.ScaleYProperty, aiBreathY);
         }
 
         protected override void OnClosed(System.EventArgs e)
@@ -39,37 +98,76 @@ namespace GeminiWatermarkRemover
             TempFileManager.CleanupAll();
         }
 
-        private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+        public void OpenImageInEditor(string filePath)
         {
-            if (args.IsSettingsSelected)
+            if (_imageEditorPage == null)
+                _imageEditorPage = new Views.ImageEditorPage(_sharedWatermarkService, _sharedSamService);
+
+            ContentFrame.Navigate(_imageEditorPage);
+            _imageEditorPage.LoadImageFromPath(filePath);
+
+            // Update nav button styles
+            UpdateNavSelection(NavImageEditor);
+        }
+
+        private void NavButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn)
             {
-                if (_settingsPage == null) _settingsPage = new Views.SettingsPage();
-                ContentFrame.Navigate(_settingsPage);
-                return;
+                string? tag = btn.Tag?.ToString();
+                switch (tag)
+                {
+                    case "ImagePage":
+                        if (_imageEditorPage == null)
+                            _imageEditorPage = new Views.ImageEditorPage(_sharedWatermarkService, _sharedSamService);
+                        ContentFrame.Navigate(_imageEditorPage);
+                        break;
+                    case "BatchPage":
+                        if (_batchPage == null)
+                            _batchPage = new Views.BatchProcessorPage(_sharedWatermarkService);
+                        ContentFrame.Navigate(_batchPage);
+                        break;
+                    case "VideoPage":
+                        if (_videoPage == null)
+                            _videoPage = new Views.VideoLabPage(_sharedWatermarkService);
+                        ContentFrame.Navigate(_videoPage);
+                        break;
+                    case "GenFillPage":
+                        if (_genFillPage == null)
+                            _genFillPage = new Views.GenerativeFillPage();
+                        // Pass image path from editor if available
+                        if (_imageEditorPage?.CurrentImagePath != null)
+                            _genFillPage.SetImage(_imageEditorPage.CurrentImagePath);
+                        ContentFrame.Navigate(_genFillPage);
+                        break;
+                    case "SpritePage":
+                        if (_spritePage == null)
+                            _spritePage = new Views.SpriteGeneratorPage(_sharedWatermarkService);
+                        ContentFrame.Navigate(_spritePage);
+                        break;
+                    case "SettingsPage":
+                        if (_settingsPage == null)
+                            _settingsPage = new Views.SettingsPage();
+                        ContentFrame.Navigate(_settingsPage);
+                        break;
+                }
+
+                UpdateNavSelection(btn);
+            }
+        }
+
+        private void UpdateNavSelection(Button selectedBtn)
+        {
+            // Reset all nav buttons to default style
+            var navButtons = new[] { NavImageEditor, NavBatch, NavVideo, NavGenFill, NavSprite, NavSettings };
+            foreach (var navBtn in navButtons)
+            {
+                if (navBtn != null)
+                    navBtn.Style = (Style)FindResource("NavItemStyle");
             }
 
-            var selectedItem = (NavigationViewItem)args.SelectedItem;
-            string? tag = selectedItem.Tag?.ToString();
-
-            switch (tag)
-            {
-                case "ImagePage":
-                    if (_imageEditorPage == null) _imageEditorPage = new Views.ImageEditorPage(_sharedWatermarkService, _sharedSamService);
-                    ContentFrame.Navigate(_imageEditorPage);
-                    break;
-                case "BatchPage":
-                    if (_batchPage == null) _batchPage = new Views.BatchProcessorPage(_sharedWatermarkService);
-                    ContentFrame.Navigate(_batchPage);
-                    break;
-                case "VideoPage":
-                    if (_videoPage == null) _videoPage = new Views.VideoLabPage(_sharedWatermarkService);
-                    ContentFrame.Navigate(_videoPage);
-                    break;
-                case "GenFillPage":
-                    if (_genFillPage == null) _genFillPage = new Views.GenerativeFillPage();
-                    ContentFrame.Navigate(_genFillPage);
-                    break;
-            }
+            // Set selected
+            selectedBtn.Style = (Style)FindResource("NavItemSelectedStyle");
         }
     }
 }

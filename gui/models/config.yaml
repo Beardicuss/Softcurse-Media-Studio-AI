@@ -1,0 +1,8 @@
+type: segment_anything
+name: sam_vit_b_01ec64_quant
+display_name: Segment Anything (ViT-B Quant)
+encoder_model_path: sam_vit_b_01ec64.encoder.quant.onnx
+decoder_model_path: sam_vit_b_01ec64.decoder.quant.onnx
+input_size: 1024
+max_width: 1024
+max_height: 682

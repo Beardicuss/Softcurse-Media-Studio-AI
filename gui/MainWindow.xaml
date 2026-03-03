@@ -5,29 +5,409 @@
         ui:WindowHelper.UseModernWindowStyle="True"
         ui:ThemeManager.RequestedTheme="Dark"
         Style="{StaticResource CyberWindowStyle}"
-        Title="Softcurse Media Studio AI" Height="750" Width="1100"
+        Title="Softcurse Media Studio AI"
+        Height="820" Width="1340"
+        MinHeight="650" MinWidth="1000"
         WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <!-- Nav item button style -->
+        <Style x:Key="NavItemStyle" TargetType="Button">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderBrush"     Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground"      Value="{StaticResource TextDimBrush}"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Margin"          Value="8,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="0,12" SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background"  Value="#1200CCEE"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource BorderBrightBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource CyberAccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Selected nav item style -->
+        <Style x:Key="NavItemSelectedStyle" TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
+            <Setter Property="Background"  Value="#1A00CCEE"/>
+            <Setter Property="BorderBrush" Value="{StaticResource CyberAccentBrush}"/>
+            <Setter Property="Foreground"  Value="{StaticResource CyberAccentBrush}"/>
+        </Style>
+    </Window.Resources>
+
+    <!-- Root grid with grid overlay -->
     <Grid>
-        <Grid.Background>
-            <VisualBrush>
-                <VisualBrush.Visual>
-                    <Grid Width="1000" Height="1000" Background="{StaticResource CyberGridBrush}" Opacity="0.5" />
-                </VisualBrush.Visual>
-            </VisualBrush>
-        </Grid.Background>
-        
-        <!-- Glassmorphism underlying layer -->
-        <Border Background="#C0020202" />
+        <!-- Background layers -->
+        <Grid>
+            <Grid.Background>
+                <SolidColorBrush Color="#060D14"/>
+            </Grid.Background>
+        </Grid>
+        <Grid Background="{StaticResource CyberGridBrush}" Opacity="1"/>
 
-        <ui:NavigationView x:Name="NavView" PaneDisplayMode="Left" SelectionChanged="NavView_SelectionChanged" IsSettingsVisible="True" Background="Transparent" Foreground="#00FFFF">
-            <ui:NavigationView.MenuItems>
-                <ui:NavigationViewItem Content="IMAGE EDITOR" Tag="ImagePage" Icon="Edit" Foreground="{StaticResource CyberAccentBrush}" />
-                <ui:NavigationViewItem Content="BATCH PROCESSOR" Tag="BatchPage" Icon="Copy" Foreground="{StaticResource CyberAccentBrush}" />
-                <ui:NavigationViewItem Content="VIDEO LAB" Tag="VideoPage" Icon="Video" Foreground="{StaticResource CyberAccentBrush}" />
-                <ui:NavigationViewItem Content="AI GENERATION HUB" Tag="GenFillPage" Icon="Highlight" Foreground="{StaticResource CyberAccentBrush}" />
-            </ui:NavigationView.MenuItems>
+        <!-- Main outer HUD border with corner brackets -->
+        <Grid Margin="8">
 
-            <Frame x:Name="ContentFrame" NavigationUIVisibility="Hidden" Background="Transparent" />
-        </ui:NavigationView>
+            <!-- Outer frame border -->
+            <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Background="Transparent">
+                <Border.Effect>
+                    <DropShadowEffect Color="#00E5FF" BlurRadius="30" ShadowDepth="0" Opacity="0.15"/>
+                </Border.Effect>
+            </Border>
+
+            <!-- Corner bracket decorations: top-left -->
+            <Canvas HorizontalAlignment="Left" VerticalAlignment="Top" Width="30" Height="30">
+                <Rectangle Canvas.Left="0" Canvas.Top="0" Width="30" Height="2"  Fill="{StaticResource CyberAccentBrush}"/>
+                <Rectangle Canvas.Left="0" Canvas.Top="0" Width="2"  Height="30" Fill="{StaticResource CyberAccentBrush}"/>
+            </Canvas>
+            <!-- top-right -->
+            <Canvas HorizontalAlignment="Right" VerticalAlignment="Top" Width="30" Height="30">
+                <Rectangle Canvas.Right="0" Canvas.Top="0" Width="30" Height="2"  Fill="{StaticResource CyberAccentBrush}" HorizontalAlignment="Right"/>
+                <Rectangle Canvas.Right="0" Canvas.Top="0" Width="2"  Height="30" Fill="{StaticResource CyberAccentBrush}" HorizontalAlignment="Right"/>
+            </Canvas>
+            <!-- bottom-left -->
+            <Canvas HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="30" Height="30">
+                <Rectangle Canvas.Left="0" Canvas.Bottom="0" Width="30" Height="2"  Fill="{StaticResource CyberAccentBrush}" VerticalAlignment="Bottom"/>
+                <Rectangle Canvas.Left="0" Canvas.Bottom="0" Width="2"  Height="30" Fill="{StaticResource CyberAccentBrush}" VerticalAlignment="Bottom"/>
+            </Canvas>
+            <!-- bottom-right -->
+            <Canvas HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="30" Height="30">
+                <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="30" Height="2"  Fill="{StaticResource CyberAccentBrush}"/>
+                <Rectangle HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="2"  Height="30" Fill="{StaticResource CyberAccentBrush}"/>
+            </Canvas>
+
+            <!-- Content layout: sidebar + main frame -->
+            <Grid Margin="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200"/>  <!-- Sidebar -->
+                    <ColumnDefinition Width="*"/>    <!-- Main content -->
+                </Grid.ColumnDefinitions>
+
+                <!-- ── SIDEBAR ────────────────────────────────────────── -->
+                <Border Grid.Column="0" Background="#071018"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>  <!-- Logo area -->
+                            <RowDefinition Height="*"/>     <!-- Nav items -->
+                            <RowDefinition Height="Auto"/>  <!-- Settings -->
+                        </Grid.RowDefinitions>
+
+                        <!-- Logo / app identity -->
+                        <Border Grid.Row="0" Padding="12,16,12,12"
+                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <StackPanel>
+                                <TextBlock Text="SOFTCURSE" FontSize="9" FontWeight="Bold"
+                                           Foreground="{StaticResource TextDimBrush}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="MEDIA STUDIO" FontSize="11" FontWeight="Bold"
+                                           Foreground="{StaticResource CyberAccentBrush}" HorizontalAlignment="Center">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect Color="#00E5FF" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                                <TextBlock Text="AI" FontSize="22" FontWeight="Bold"
+                                           Foreground="{StaticResource CyberAccentBrush}" HorizontalAlignment="Center" Margin="0,-4,0,0">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect Color="#00E5FF" BlurRadius="14" ShadowDepth="0" Opacity="0.8"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Nav items -->
+                        <StackPanel Grid.Row="1" Margin="0,8">
+
+                            <!-- IMAGE EDITOR — from softcurse-icons.html: layered frames + mountain + pencil -->
+                            <Button x:Name="NavImageEditor" Tag="ImagePage"
+                                    Style="{StaticResource NavItemSelectedStyle}"
+                                    Click="NavButton_Click">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Viewbox Width="38" Height="38" Margin="0,0,0,4">
+                                        <Canvas x:Name="IconImageEditor" Width="44" Height="44">
+                                            <!-- Layer 3 (back) -->
+                                            <Rectangle Canvas.Left="6" Canvas.Top="12" Width="30" Height="22"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" RadiusX="1" RadiusY="1" Opacity="0.3"/>
+                                            <!-- Layer 2 (mid) -->
+                                            <Rectangle Canvas.Left="8" Canvas.Top="10" Width="28" Height="20"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" RadiusX="1" RadiusY="1" Opacity="0.5"/>
+                                            <!-- Layer 1 (front frame) -->
+                                            <Rectangle x:Name="IEFrame" Canvas.Left="10" Canvas.Top="8" Width="26" Height="20"
+                                                       Stroke="#00E5FF" StrokeThickness="1.5" Fill="#0A0E1A" RadiusX="1" RadiusY="1"/>
+                                            <!-- Mountain landscape -->
+                                            <Polyline Points="12,24 18,16 23,21 27,17 34,24"
+                                                      Stroke="#00E5FF" StrokeThickness="1.2" Opacity="0.8">
+                                                <Polyline.RenderTransform>
+                                                    <TranslateTransform X="0" Y="0"/>
+                                                </Polyline.RenderTransform>
+                                            </Polyline>
+                                            <!-- Sun (gold accent) -->
+                                            <Ellipse Canvas.Left="29.5" Canvas.Top="11.5" Width="5" Height="5"
+                                                     Stroke="#C8973A" StrokeThickness="1.2" Fill="Transparent"/>
+                                            <!-- Pencil -->
+                                            <Line X1="28" Y1="30" X2="36" Y2="38" Stroke="#00E5FF" StrokeThickness="1.5"/>
+                                            <Polygon Points="28,30 24,36 30,36" Stroke="#00E5FF" StrokeThickness="1" Fill="#0A1830"/>
+                                            <Line X1="26" Y1="34" X2="29" Y2="31" Stroke="#C8973A" StrokeThickness="1"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                    <TextBlock Text="IMAGE EDITOR" FontSize="10" FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               FontFamily="Segoe UI"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- MASK PROCESSOR — from softcurse-icons.html: rings + crosshair + dots -->
+                            <Button x:Name="NavBatch" Tag="BatchPage"
+                                    Style="{StaticResource NavItemStyle}"
+                                    Click="NavButton_Click">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Viewbox Width="38" Height="38" Margin="0,0,0,4">
+                                        <Canvas Width="44" Height="44">
+                                            <!-- Outer dashed ring (rotating) -->
+                                            <Ellipse x:Name="MPOuterRing" Canvas.Left="8" Canvas.Top="8" Width="28" Height="28"
+                                                     Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent"
+                                                     StrokeDashArray="2 1" Opacity="0.6"
+                                                     RenderTransformOrigin="0.5,0.5">
+                                                <Ellipse.RenderTransform>
+                                                    <RotateTransform x:Name="MPOuterRotate" Angle="0"/>
+                                                </Ellipse.RenderTransform>
+                                            </Ellipse>
+                                            <!-- Inner dashed ring (counter-rotating) -->
+                                            <Ellipse x:Name="MPInnerRing" Canvas.Left="12" Canvas.Top="12" Width="20" Height="20"
+                                                     Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent"
+                                                     StrokeDashArray="1.3 1.3" Opacity="0.4"
+                                                     RenderTransformOrigin="0.5,0.5">
+                                                <Ellipse.RenderTransform>
+                                                    <RotateTransform x:Name="MPInnerRotate" Angle="0"/>
+                                                </Ellipse.RenderTransform>
+                                            </Ellipse>
+                                            <!-- Crosshair vertical -->
+                                            <Line X1="22" Y1="8" X2="22" Y2="36" Stroke="#00E5FF" StrokeThickness="1" Opacity="0.5"
+                                                  StrokeDashArray="1.2 0.8"/>
+                                            <!-- Crosshair horizontal -->
+                                            <Line X1="8" Y1="22" X2="36" Y2="22" Stroke="#00E5FF" StrokeThickness="1" Opacity="0.5"
+                                                  StrokeDashArray="1.2 0.8"/>
+                                            <!-- Center dot -->
+                                            <Ellipse Canvas.Left="19" Canvas.Top="19" Width="6" Height="6" Fill="#00E5FF"/>
+                                            <!-- Cardinal accent dots (gold) -->
+                                            <Ellipse Canvas.Left="21" Canvas.Top="8.5" Width="3" Height="3" Fill="#C8973A"/>
+                                            <Ellipse Canvas.Left="32.5" Canvas.Top="21" Width="3" Height="3" Fill="#C8973A"/>
+                                            <Ellipse Canvas.Left="21" Canvas.Top="32.5" Width="3" Height="3" Fill="#C8973A"/>
+                                            <Ellipse Canvas.Left="8.5" Canvas.Top="21" Width="3" Height="3" Fill="#C8973A"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                    <TextBlock Text="MASK PROCESSOR" FontSize="10" FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               FontFamily="Segoe UI"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- VIDEO LAB — from softcurse-icons.html: play button + film perfs + ring -->
+                            <Button x:Name="NavVideo" Tag="VideoPage"
+                                    Style="{StaticResource NavItemStyle}"
+                                    Click="NavButton_Click">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Viewbox Width="38" Height="38" Margin="0,0,0,4">
+                                        <Canvas Width="44" Height="44">
+                                            <!-- Outer ring -->
+                                            <Ellipse Canvas.Left="7" Canvas.Top="7" Width="30" Height="30"
+                                                     Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" Opacity="0.3"/>
+                                            <!-- Play triangle (breathing) -->
+                                            <Polygon x:Name="VLPlayTriangle" Points="16,14 32,22 16,30"
+                                                     Stroke="#00E5FF" StrokeThickness="1.5" Fill="#0A1830"
+                                                     RenderTransformOrigin="0.5,0.5">
+                                                <Polygon.RenderTransform>
+                                                    <ScaleTransform x:Name="VLPlayScale" ScaleX="1" ScaleY="1"/>
+                                                </Polygon.RenderTransform>
+                                            </Polygon>
+                                            <!-- Scan line -->
+                                            <Line X1="10" Y1="22" X2="34" Y2="22" Stroke="#00E5FF" StrokeThickness="1" Opacity="0.5"/>
+                                            <!-- Film perfs left -->
+                                            <Rectangle Canvas.Left="6" Canvas.Top="12" Width="5" Height="3"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" RadiusX="0.5" RadiusY="0.5" Opacity="0.6"/>
+                                            <Rectangle Canvas.Left="6" Canvas.Top="18" Width="5" Height="3"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" RadiusX="0.5" RadiusY="0.5" Opacity="0.6"/>
+                                            <Rectangle Canvas.Left="6" Canvas.Top="24" Width="5" Height="3"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" RadiusX="0.5" RadiusY="0.5" Opacity="0.6"/>
+                                            <Rectangle Canvas.Left="6" Canvas.Top="30" Width="5" Height="3"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" RadiusX="0.5" RadiusY="0.5" Opacity="0.6"/>
+                                            <!-- Film perfs right -->
+                                            <Rectangle Canvas.Left="33" Canvas.Top="12" Width="5" Height="3"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" RadiusX="0.5" RadiusY="0.5" Opacity="0.6"/>
+                                            <Rectangle Canvas.Left="33" Canvas.Top="18" Width="5" Height="3"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" RadiusX="0.5" RadiusY="0.5" Opacity="0.6"/>
+                                            <Rectangle Canvas.Left="33" Canvas.Top="24" Width="5" Height="3"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" RadiusX="0.5" RadiusY="0.5" Opacity="0.6"/>
+                                            <Rectangle Canvas.Left="33" Canvas.Top="30" Width="5" Height="3"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" RadiusX="0.5" RadiusY="0.5" Opacity="0.6"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                    <TextBlock Text="VIDEO LAB" FontSize="10" FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               FontFamily="Segoe UI"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- AI GENERATION HUB — from softcurse-icons.html: orbit ellipses + core -->
+                            <Button x:Name="NavGenFill" Tag="GenFillPage"
+                                    Style="{StaticResource NavItemStyle}"
+                                    Click="NavButton_Click">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Viewbox Width="38" Height="38" Margin="0,0,0,4">
+                                        <Canvas Width="44" Height="44">
+                                            <!-- Orbit path 1 (horizontal) -->
+                                            <Ellipse Canvas.Left="8" Canvas.Top="15" Width="28" Height="14"
+                                                     Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" Opacity="0.3"/>
+                                            <!-- Orbit path 2 (60° rotated) -->
+                                            <Ellipse Canvas.Left="8" Canvas.Top="15" Width="28" Height="14"
+                                                     Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" Opacity="0.3">
+                                                <Ellipse.RenderTransform>
+                                                    <RotateTransform Angle="60" CenterX="14" CenterY="7"/>
+                                                </Ellipse.RenderTransform>
+                                            </Ellipse>
+                                            <!-- Orbit path 3 (120° rotated) -->
+                                            <Ellipse Canvas.Left="8" Canvas.Top="15" Width="28" Height="14"
+                                                     Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" Opacity="0.3">
+                                                <Ellipse.RenderTransform>
+                                                    <RotateTransform Angle="120" CenterX="14" CenterY="7"/>
+                                                </Ellipse.RenderTransform>
+                                            </Ellipse>
+                                            <!-- Orbiting dot (gold) -->
+                                            <Ellipse Canvas.Left="33.5" Canvas.Top="19.5" Width="5" Height="5" Fill="#C8973A"/>
+                                            <!-- Orbiting dots (cyan) -->
+                                            <Ellipse Canvas.Left="27" Canvas.Top="8" Width="4" Height="4" Fill="#00E5FF"/>
+                                            <Ellipse Canvas.Left="7" Canvas.Top="20" Width="4" Height="4" Fill="#00E5FF"/>
+                                            <!-- Core ring -->
+                                            <Ellipse Canvas.Left="12" Canvas.Top="12" Width="20" Height="20"
+                                                     Stroke="#00E5FF" StrokeThickness="1.5" Fill="#0A1830"/>
+                                            <!-- Core center (breathing) -->
+                                            <Ellipse x:Name="AICore" Canvas.Left="18" Canvas.Top="18" Width="8" Height="8" Fill="#00E5FF"
+                                                     RenderTransformOrigin="0.5,0.5">
+                                                <Ellipse.RenderTransform>
+                                                    <ScaleTransform x:Name="AICoreScale" ScaleX="1" ScaleY="1"/>
+                                                </Ellipse.RenderTransform>
+                                            </Ellipse>
+                                        </Canvas>
+                                    </Viewbox>
+                                    <TextBlock Text="AI GENERATION HUB" FontSize="10" FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               FontFamily="Segoe UI" TextWrapping="Wrap" TextAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- SPRITE GENERATOR — 2×2 sprite grid with character poses -->
+                            <Button x:Name="NavSprite" Tag="SpritePage"
+                                    Style="{StaticResource NavItemStyle}"
+                                    Click="NavButton_Click">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Viewbox Width="38" Height="38" Margin="0,0,0,4">
+                                        <Canvas Width="44" Height="44">
+                                            <!-- 2x2 frame grid -->
+                                            <Rectangle Canvas.Left="2"  Canvas.Top="2"  Width="18" Height="18"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="#071018" RadiusX="1" RadiusY="1"/>
+                                            <Rectangle Canvas.Left="24" Canvas.Top="2"  Width="18" Height="18"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="#071018" RadiusX="1" RadiusY="1"/>
+                                            <Rectangle Canvas.Left="2"  Canvas.Top="24" Width="18" Height="18"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="#071018" RadiusX="1" RadiusY="1"/>
+                                            <Rectangle Canvas.Left="24" Canvas.Top="24" Width="18" Height="18"
+                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="#071018" RadiusX="1" RadiusY="1"/>
+                                            <!-- Character pose 1 (top-left) -->
+                                            <Ellipse Canvas.Left="8" Canvas.Top="5" Width="5" Height="5" Fill="#C8973A"/>
+                                            <Rectangle Canvas.Left="9" Canvas.Top="11" Width="3" Height="5" Fill="#C8973A"/>
+                                            <!-- Character pose 2 (top-right) -->
+                                            <Ellipse Canvas.Left="30" Canvas.Top="5" Width="5" Height="5" Fill="#00E5FF"/>
+                                            <Rectangle Canvas.Left="31" Canvas.Top="11" Width="3" Height="5" Fill="#00E5FF"/>
+                                            <!-- Character pose 3 (bottom-left) -->
+                                            <Ellipse Canvas.Left="8" Canvas.Top="27" Width="5" Height="5" Fill="#00E5FF"/>
+                                            <Rectangle Canvas.Left="9" Canvas.Top="33" Width="3" Height="5" Fill="#00E5FF"/>
+                                            <!-- Character pose 4 (bottom-right) -->
+                                            <Ellipse Canvas.Left="30" Canvas.Top="27" Width="5" Height="5" Fill="#C8973A"/>
+                                            <Rectangle Canvas.Left="31" Canvas.Top="33" Width="3" Height="5" Fill="#C8973A"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                    <TextBlock Text="SPRITE GENERATOR" FontSize="10" FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               FontFamily="Segoe UI" TextWrapping="Wrap" TextAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                        </StackPanel>
+
+                        <!-- Settings at bottom of sidebar -->
+                        <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+                            <Button x:Name="NavSettings" Tag="SettingsPage"
+                                    Style="{StaticResource NavItemStyle}"
+                                    Click="NavButton_Click" Margin="8,8">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <!-- Gear icon -->
+                                    <Viewbox Width="18" Height="18" Margin="0,0,8,0">
+                                        <Canvas Width="24" Height="24">
+                                            <Ellipse Canvas.Left="8" Canvas.Top="8" Width="8" Height="8"
+                                                     Stroke="{StaticResource TextDimBrush}" StrokeThickness="1.5" Fill="Transparent"/>
+                                            <Path Stroke="{StaticResource TextDimBrush}" StrokeThickness="1.5" Fill="Transparent"
+                                                  Data="M12,2 L12,5 M12,19 L12,22 M2,12 L5,12 M19,12 L22,12 M4.2,4.2 L6.3,6.3 M17.7,17.7 L19.8,19.8 M19.8,4.2 L17.7,6.3 M6.3,17.7 L4.2,19.8"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                    <TextBlock Text="SETTINGS" FontSize="10" FontWeight="Bold"
+                                               VerticalAlignment="Center" 
+                                               FontFamily="Segoe UI"/>
+                                </StackPanel>
+                            </Button>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- ── MAIN CONTENT AREA ───────────────────────────────── -->
+                <Grid Grid.Column="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="44"/>  <!-- Top title bar -->
+                        <RowDefinition Height="*"/>   <!-- Page content -->
+                    </Grid.RowDefinitions>
+
+                    <!-- Top title bar -->
+                    <Border Grid.Row="0" Background="#07101A"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <!-- Centered title -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <!-- Left bracket decoration -->
+                                <TextBlock Text="⬡" FontSize="12" Foreground="{StaticResource BorderBrightBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="SOFTCURSE MEDIA STUDIO AI" FontSize="14" FontWeight="Bold"
+                                           Foreground="{StaticResource CyberAccentBrush}"
+                                           VerticalAlignment="Center" FontFamily="Segoe UI">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect Color="#00E5FF" BlurRadius="10" ShadowDepth="0" Opacity="0.7"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                                <TextBlock Text="⬡" FontSize="12" Foreground="{StaticResource BorderBrightBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            </StackPanel>
+
+                            <!-- Right: version indicator -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,16,0">
+                                <TextBlock Text="v2.0" FontSize="10" Foreground="{StaticResource TextDimBrush}"
+                                           VerticalAlignment="Center" FontFamily="Consolas"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Page content frame -->
+                    <Frame x:Name="ContentFrame" Grid.Row="1"
+                           NavigationUIVisibility="Hidden" Background="Transparent"/>
+                </Grid>
+
+            </Grid>
+        </Grid>
     </Grid>
 </Window>

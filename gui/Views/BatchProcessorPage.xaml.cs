@@ -116,21 +116,35 @@ namespace GeminiWatermarkRemover.Views
                                 BatchProgressBar.Value = completed;
                             }));
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
-                            Application.Current.Dispatcher.BeginInvoke(new Action(() => item.Status = "Error"));
+                            // F-14: capture error detail for diagnostics — write to batch log
+                            string errorMsg = ex.Message;
+                            string logPath  = Path.Combine(outputDir, "batch_errors.log");
+                            try
+                            {
+                                File.AppendAllText(logPath,
+                                    $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] FAILED: {item.FileName}\n" +
+                                    $"  Error: {errorMsg}\n\n");
+                            }
+                            catch { /* log write failure is non-fatal */ }
+
+                            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                            {
+                                item.Status = $"Error: {errorMsg}";
+                            }));
                         }
                     }
                 }, token);
 
                 if (!token.IsCancellationRequested)
                 {
-                    MessageBox.Show("Batch processing complete!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    DarkMessageBox.Show("Batch processing complete!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (OperationCanceledException)
             {
-                MessageBox.Show("Batch processing was canceled.", "Canceled", MessageBoxButton.OK, MessageBoxImage.Warning);
+                DarkMessageBox.Show("Batch processing was canceled.", "Canceled", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             finally
             {

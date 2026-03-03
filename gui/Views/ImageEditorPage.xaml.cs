@@ -13,6 +13,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using System.Windows.Controls;
 using System.Threading.Tasks;
 
@@ -23,9 +24,11 @@ namespace GeminiWatermarkRemover.Views
         private string? _currentImagePath;
         private string? _processedImagePath;
 
+        /// <summary>Path to the currently loaded/processed image. Used by MainWindow to pass to AI Gen Hub.</summary>
+        public string? CurrentImagePath => _currentImagePath;
+
         private string? _originalImagePath;
-        private Stack<string> _undoStack = new Stack<string>();
-        private Stack<string> _redoStack = new Stack<string>();
+
 
         private WatermarkService _watermarkService;
         private SamModelService _samService;
@@ -55,6 +58,9 @@ namespace GeminiWatermarkRemover.Views
                 LoadImage(openFileDialog.FileName);
             }
         }
+
+        /// <summary>Public entry-point so MainWindow can load a file programmatically (e.g. from Sprite Generator).</summary>
+        public void LoadImageFromPath(string path) => LoadImage(path);
 
         private void LoadImage(string path)
         {
@@ -159,6 +165,8 @@ namespace GeminiWatermarkRemover.Views
             ClearMaskButton.Visibility = Visibility.Collapsed;
             StatusText.Text = "Auto Mode: Ready to remove watermark.";
 
+            UpdateToolBorderHighlights(ToolComboBox.SelectedIndex);
+
             switch (ToolComboBox.SelectedIndex)
             {
                 case 1: // Brush Tool
@@ -250,47 +258,46 @@ namespace GeminiWatermarkRemover.Views
              
              Point p = e.GetPosition(SamCanvas);
              
-             StatusText.Text = "SAM Processing: Generating perfect AI mask from point...";
+             // F-02: show honest label depending on whether real SAM models are loaded
+             bool samLoaded = _samService.IsSamAvailable;
+             StatusText.Text = samLoaded
+                 ? "SAM: Generating mask from point..."
+                 : "Region Select (GrabCut): Generating mask from point...";
              SamCanvas.IsHitTestVisible = false;
 
              try
              {
-                 string maskPath = await _samService.GenerateMaskAsync(_currentImagePath, p);
+                 // F-02: GenerateMaskAsync now returns (maskPath, usedSam) tuple
+                 var (maskPath, usedSam) = await _samService.GenerateMaskAsync(_currentImagePath, p);
 
-                 // Add the mask visually to the UI
+                 TempFileManager.RegisterTempFile(maskPath);
+
                  BitmapImage maskBitmap = new BitmapImage();
                  maskBitmap.BeginInit();
-                 maskBitmap.UriSource = new Uri(maskPath);
+                 maskBitmap.UriSource   = new Uri(maskPath);
                  maskBitmap.CacheOption = BitmapCacheOption.OnLoad;
                  maskBitmap.EndInit();
                  maskBitmap.Freeze();
 
-                 System.Windows.Controls.Image processedImage = new System.Windows.Controls.Image
+                 System.Windows.Controls.Image maskOverlay = new System.Windows.Controls.Image
                  {
-                     Source = maskBitmap,
-                     Width = SamCanvas.Width,
-                     Height = SamCanvas.Height,
+                     Source  = maskBitmap,
+                     Width   = SamCanvas.Width,
+                     Height  = SamCanvas.Height,
                      Stretch = Stretch.Fill,
-                     Opacity = 0.5 // Semi-transparent overlay to show it's a mask
-                 };
-                 
-                 // Create a red tint effect for the mask
-                 var colorOverlay = new System.Windows.Shapes.Rectangle
-                 {
-                     Width = SamCanvas.Width,
-                     Height = SamCanvas.Height,
-                     Fill = Brushes.Red,
-                     Opacity = 0.4
+                     Opacity = 0.5
                  };
 
-                 SamCanvas.Children.Clear(); // Clear previous SAM mask if any
-                 SamCanvas.Children.Add(processedImage);
-                 
-                 StatusText.Text = "SAM Mask Generated Successfully!";
+                 SamCanvas.Children.Clear();
+                 SamCanvas.Children.Add(maskOverlay);
+
+                 StatusText.Text = usedSam
+                     ? "SAM Mask Generated."
+                     : "Region Mask Generated (GrabCut). For better results, install SAM ONNX models.";
              }
              catch (Exception ex)
              {
-                 StatusText.Text = $"SAM Error: {ex.Message}";
+                 StatusText.Text = $"Region Select Error: {ex.Message}";
              }
              finally
              {
@@ -457,6 +464,9 @@ namespace GeminiWatermarkRemover.Views
                     OpenCvSharp.Mat[] resultChannels = new OpenCvSharp.Mat[] { imgChannels[0], imgChannels[1], imgChannels[2], finalMask };
                     OpenCvSharp.Cv2.Merge(resultChannels, result);
 
+                    // Dispose split channel Mats to prevent memory leak
+                    foreach (var ch in imgChannels) ch.Dispose();
+
                     OpenCvSharp.Cv2.ImWrite(tempOutput, result);
 
                     Dispatcher.Invoke(() =>
@@ -531,18 +541,25 @@ namespace GeminiWatermarkRemover.Views
 
                     string apiUrl = AppSettings.ApiEndpoint;
                     
-                    if (string.IsNullOrWhiteSpace(apiUrl))
+                    // F-04: validate URL before making any network request
+                    if (!AppSettings.IsApiEndpointSafe(apiUrl, out string expandUrlError))
                     {
                         Dispatcher.Invoke(() => {
-                            MessageBox.Show("Expand API connection failed: API Endpoint is empty. Please set a valid Stable Diffusion API URL in the Settings menu.", "Connection Refused", MessageBoxButton.OK, MessageBoxImage.Warning);
-                            StatusText.Text = "Expand Pipeline Failed: Missing API Endpoint.";
+                            DarkMessageBox.Show($"Expand API endpoint is invalid:\n{expandUrlError}\n\nPlease update it in Settings.", "Invalid API Endpoint", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            StatusText.Text = "Expand Failed: Invalid API endpoint.";
                         });
                         return;
                     }
                     
-                    // Route to img2img specifically
-                    if (!apiUrl.EndsWith("/")) apiUrl += "/";
-                    string expandApiUrl = apiUrl + "sdapi/v1/img2img";
+                    // Route to img2img specifically — avoid double-appending
+                    string expandApiUrl;
+                    if (apiUrl.Contains("sdapi/v1/img2img", System.StringComparison.OrdinalIgnoreCase))
+                        expandApiUrl = apiUrl;
+                    else
+                    {
+                        if (!apiUrl.EndsWith("/")) apiUrl += "/";
+                        expandApiUrl = apiUrl + "sdapi/v1/img2img";
+                    }
 
                     HttpResponseMessage response = await _httpClient.PostAsync(expandApiUrl, content);
                     
@@ -570,7 +587,7 @@ namespace GeminiWatermarkRemover.Views
                     }
                     else
                     {
-                        Dispatcher.Invoke(() => MessageBox.Show($"Expand API Error: {response.StatusCode}\nEnsure Stable Diffusion is running with --api.", "Error", MessageBoxButton.OK, MessageBoxImage.Error));
+                        Dispatcher.Invoke(() => DarkMessageBox.Show($"Expand API Error: {response.StatusCode}\nEnsure Stable Diffusion is running with --api.", "Error", MessageBoxButton.OK, MessageBoxImage.Error));
                         Dispatcher.Invoke(() => StatusText.Text = "Expand API Error");
                     }
                 }
@@ -693,17 +710,25 @@ namespace GeminiWatermarkRemover.Views
 
                     string apiUrl = AppSettings.ApiEndpoint;
                     
-                    if (string.IsNullOrWhiteSpace(apiUrl))
+                    // F-04: validate URL before making any network request
+                    if (!AppSettings.IsApiEndpointSafe(apiUrl, out string upscaleUrlError))
                     {
                         Dispatcher.Invoke(() => {
-                            MessageBox.Show("Upscale API connection failed: API Endpoint is empty. Please set a valid Stable Diffusion API URL in the Settings menu.", "Connection Refused", MessageBoxButton.OK, MessageBoxImage.Warning);
-                            StatusText.Text = "Upscale Pipeline Failed: Missing API Endpoint.";
+                            DarkMessageBox.Show($"Upscale API endpoint is invalid:\n{upscaleUrlError}\n\nPlease update it in Settings.", "Invalid API Endpoint", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            StatusText.Text = "Upscale Failed: Invalid API endpoint.";
                         });
                         return; // Fallback happens outside
                     }
                     
-                    if (!apiUrl.EndsWith("/")) apiUrl += "/";
-                    string upscaleApiUrl = apiUrl + "sdapi/v1/extra-single-image";
+                    // Avoid URL double-append
+                    string upscaleApiUrl;
+                    if (apiUrl.Contains("sdapi/v1/extra-single-image", System.StringComparison.OrdinalIgnoreCase))
+                        upscaleApiUrl = apiUrl;
+                    else
+                    {
+                        if (!apiUrl.EndsWith("/")) apiUrl += "/";
+                        upscaleApiUrl = apiUrl + "sdapi/v1/extra-single-image";
+                    }
 
                     // Note: Don't throw error on AI failure, just silently fall back
                     try 
@@ -840,6 +865,75 @@ namespace GeminiWatermarkRemover.Views
                 if (ToolComboBox != null && ToolComboBox.SelectedIndex == 2)
                 {
                     ManualInkCanvas.EraserShape = new EllipseStylusShape(e.NewValue, e.NewValue);
+                }
+            }
+        }
+
+        // ── TOOLBAR ICON CLICK HANDLERS ─────────────────────────────────
+        // Each handler switches the ToolComboBox to the corresponding index:
+        //   0 = AUTO, 1 = CYBER BRUSH, 2 = ERASER, 3 = POLY LASSO, 4 = MAGIC WAND
+
+        private void ToolIcon_Auto_Click(object sender, MouseButtonEventArgs e)
+        {
+            ToolComboBox.SelectedIndex = 0;
+            e.Handled = true;
+        }
+
+        private void ToolIcon_CyberBrush_Click(object sender, MouseButtonEventArgs e)
+        {
+            ToolComboBox.SelectedIndex = 1;
+            e.Handled = true;
+        }
+
+        private void ToolIcon_Eraser_Click(object sender, MouseButtonEventArgs e)
+        {
+            ToolComboBox.SelectedIndex = 2;
+            e.Handled = true;
+        }
+
+        private void ToolIcon_PolyLasso_Click(object sender, MouseButtonEventArgs e)
+        {
+            ToolComboBox.SelectedIndex = 3;
+            e.Handled = true;
+        }
+
+        private void ToolIcon_MagicWand_Click(object sender, MouseButtonEventArgs e)
+        {
+            ToolComboBox.SelectedIndex = 4;
+            e.Handled = true;
+        }
+
+        // ── TOOL SELECTION VISUAL HIGHLIGHT ─────────────────────────────
+        private void UpdateToolBorderHighlights(int selectedIndex)
+        {
+            var borders = new[] { AutoToolBorder, BrushToolBorder, EraserToolBorder, LassoToolBorder, WandToolBorder };
+
+            var defaultBg = new SolidColorBrush(Color.FromRgb(0x07, 0x10, 0x1A));
+            var defaultBorder = (Brush)FindResource("BorderBrightBrush");
+            var activeBg = new SolidColorBrush(Color.FromArgb(0x25, 0x00, 0xE5, 0xFF));
+            var activeBorder = (Brush)FindResource("CyberAccentBrush");
+
+            for (int i = 0; i < borders.Length; i++)
+            {
+                if (borders[i] == null) continue;
+
+                if (i == selectedIndex)
+                {
+                    borders[i].Background = activeBg;
+                    borders[i].BorderBrush = activeBorder;
+                    borders[i].Effect = new DropShadowEffect
+                    {
+                        Color = Color.FromRgb(0x00, 0xE5, 0xFF),
+                        BlurRadius = 16,
+                        ShadowDepth = 0,
+                        Opacity = 0.6
+                    };
+                }
+                else
+                {
+                    borders[i].Background = defaultBg;
+                    borders[i].BorderBrush = defaultBorder;
+                    borders[i].Effect = null;
                 }
             }
         }

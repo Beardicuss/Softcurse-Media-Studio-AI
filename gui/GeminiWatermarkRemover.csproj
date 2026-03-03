@@ -7,6 +7,10 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>SoftcurseMediaStudioAI</AssemblyName>
     <ApplicationTitle>Softcurse Media Studio AI</ApplicationTitle>
+    <!-- F-08: required for unsafe pointer tensor fill in WatermarkService -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- F-15: namespace is being migrated; rootnamespace set to match assembly -->
+    <RootNamespace>GeminiWatermarkRemover</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

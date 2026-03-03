@@ -9,36 +9,206 @@
                 <ui:ThemeResources />
                 <ui:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
-            
-            <!-- Global Cyberpunk Theme Resources -->
-            <SolidColorBrush x:Key="SystemControlHighlightAccentBrush" Color="#00FFFF" />
-            <SolidColorBrush x:Key="SystemControlHighlightAltListAccentHighBrush" Color="#0088FF" />
-            <SolidColorBrush x:Key="CyberBackgroundBrush" Color="#020202" />
-            <SolidColorBrush x:Key="CyberAccentBrush" Color="#00FFFF" />
-            <SolidColorBrush x:Key="CyberSecondaryBrush" Color="#0088FF" />
-            <SolidColorBrush x:Key="CyberMagentaBrush" Color="#FF00FF" />
 
-            <!-- Cyan Grid Overlay Brush -->
-            <DrawingBrush x:Key="CyberGridBrush" Viewport="0,0,30,30" ViewportUnits="Absolute" TileMode="Tile">
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!--  SOFTCURSE MEDIA STUDIO AI — SCI-FI HUD THEME v2.0         -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+
+            <!-- Brushes -->
+            <SolidColorBrush x:Key="BG"                  Color="#060D14" />
+            <SolidColorBrush x:Key="BG2"                 Color="#0A1520" />
+            <SolidColorBrush x:Key="PanelBrush"          Color="#071018" />
+            <SolidColorBrush x:Key="CyberAccentBrush"    Color="#00E5FF" />
+            <SolidColorBrush x:Key="CyberSecondaryBrush" Color="#1565FF" />
+            <SolidColorBrush x:Key="CyberMagentaBrush"   Color="#FF4488" />
+            <SolidColorBrush x:Key="BorderBrush"         Color="#0D3A5C" />
+            <SolidColorBrush x:Key="BorderBrightBrush"   Color="#1A6A9A" />
+            <SolidColorBrush x:Key="TextBrush"           Color="#9AC8D8" />
+            <SolidColorBrush x:Key="TextDimBrush"        Color="#3A7A8A" />
+            <SolidColorBrush x:Key="GoldAccentBrush"     Color="#C8973A" />
+            <SolidColorBrush x:Key="SuccessBrush"        Color="#00FF99" />
+            <SolidColorBrush x:Key="WarnBrush"           Color="#FF8C00" />
+
+            <!-- ModernWpf system overrides -->
+            <SolidColorBrush x:Key="SystemControlHighlightAccentBrush"            Color="#00E5FF" />
+            <SolidColorBrush x:Key="SystemControlHighlightAltListAccentHighBrush" Color="#1565FF" />
+            <SolidColorBrush x:Key="SystemControlBackgroundChromeMediumBrush"     Color="#0A1520" />
+            <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground"          Color="#071018" />
+
+            <!-- Grid dot pattern -->
+            <DrawingBrush x:Key="CyberGridBrush" Viewport="0,0,40,40" ViewportUnits="Absolute" TileMode="Tile" Opacity="0.4">
                 <DrawingBrush.Drawing>
-                    <GeometryDrawing>
-                        <GeometryDrawing.Geometry>
-                            <RectangleGeometry Rect="0,0,30,30"/>
-                        </GeometryDrawing.Geometry>
-                        <GeometryDrawing.Pen>
-                            <Pen Brush="#2000FFFF" Thickness="1"/>
-                        </GeometryDrawing.Pen>
-                    </GeometryDrawing>
+                    <DrawingGroup>
+                        <GeometryDrawing>
+                            <GeometryDrawing.Geometry>
+                                <LineGeometry StartPoint="0,0" EndPoint="40,0"/>
+                            </GeometryDrawing.Geometry>
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#0D007799" Thickness="0.5"/>
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing>
+                            <GeometryDrawing.Geometry>
+                                <LineGeometry StartPoint="0,0" EndPoint="0,40"/>
+                            </GeometryDrawing.Geometry>
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="#0D007799" Thickness="0.5"/>
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                        <GeometryDrawing>
+                            <GeometryDrawing.Geometry>
+                                <EllipseGeometry Center="0,0" RadiusX="1.5" RadiusY="1.5"/>
+                            </GeometryDrawing.Geometry>
+                            <GeometryDrawing.Brush>
+                                <SolidColorBrush Color="#2000AACC"/>
+                            </GeometryDrawing.Brush>
+                        </GeometryDrawing>
+                    </DrawingGroup>
                 </DrawingBrush.Drawing>
             </DrawingBrush>
 
-            <!-- Base Window Cyber Style -->
+            <!-- Window Style -->
             <Style x:Key="CyberWindowStyle" TargetType="Window">
-                <Setter Property="Background" Value="{StaticResource CyberBackgroundBrush}"/>
-                <Setter Property="Foreground" Value="#00FFFF"/>
-                <Setter Property="FontFamily" Value="Consolas, Courier New, monospace"/>
+                <Setter Property="Background"      Value="{StaticResource BG}"/>
+                <Setter Property="Foreground"      Value="{StaticResource TextBrush}"/>
+                <Setter Property="FontFamily"      Value="Segoe UI, Consolas, monospace"/>
+                <Setter Property="BorderBrush"     Value="{StaticResource BorderBrightBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
             </Style>
-            
+
+            <!-- ── PRIMARY BUTTON (cyan fill) ──────────────────────────── -->
+            <Style x:Key="BtnPrimary" TargetType="Button">
+                <Setter Property="Background"      Value="#CC00E5FF"/>
+                <Setter Property="Foreground"      Value="#060D14"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="FontWeight"      Value="Bold"/>
+                <Setter Property="FontSize"        Value="11"/>
+                <Setter Property="FontFamily"      Value="Segoe UI"/>
+                <Setter Property="Padding"         Value="14,7"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                    BorderBrush="#00E5FF" BorderThickness="1"
+                                    Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#00E5FF" BlurRadius="12" ShadowDepth="0" Opacity="0.65"/>
+                                </Border.Effect>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bd" Property="Background" Value="#FF00E5FF"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="bd" Property="Background" Value="#18003344"/>
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="#33003344"/>
+                                    <Setter Property="Foreground" Value="#557788"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- ── OUTLINE BUTTON ──────────────────────────────────────── -->
+            <Style x:Key="BtnOutline" TargetType="Button">
+                <Setter Property="Background"      Value="Transparent"/>
+                <Setter Property="Foreground"      Value="{StaticResource CyberAccentBrush}"/>
+                <Setter Property="BorderBrush"     Value="{StaticResource BorderBrightBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontSize"        Value="11"/>
+                <Setter Property="FontFamily"      Value="Segoe UI"/>
+                <Setter Property="Padding"         Value="12,6"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bd" Property="Background"  Value="#1400E5FF"/>
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource CyberAccentBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="#33223344"/>
+                                    <Setter Property="Foreground" Value="#557788"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- ── DANGER BUTTON ───────────────────────────────────────── -->
+            <Style x:Key="BtnDanger" TargetType="Button" BasedOn="{StaticResource BtnOutline}">
+                <Setter Property="Foreground"  Value="#FF4488"/>
+                <Setter Property="BorderBrush" Value="#661133"/>
+            </Style>
+
+            <!-- ── TOGGLE OUTLINE ──────────────────────────────────────── -->
+            <Style x:Key="ToggleOutline" TargetType="ToggleButton">
+                <Setter Property="Background"      Value="Transparent"/>
+                <Setter Property="Foreground"      Value="{StaticResource CyberAccentBrush}"/>
+                <Setter Property="BorderBrush"     Value="{StaticResource BorderBrightBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontSize"        Value="11"/>
+                <Setter Property="FontFamily"      Value="Segoe UI"/>
+                <Setter Property="Padding"         Value="12,6"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="bd" Property="Background"  Value="#2200E5FF"/>
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource CyberAccentBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bd" Property="Background" Value="#0F00CCFF"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="#33223344"/>
+                                    <Setter Property="Foreground" Value="#557788"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- ── COMBO BOX ───────────────────────────────────────────── -->
+            <Style x:Key="HudComboBox" TargetType="ComboBox">
+                <Setter Property="Background"      Value="#0A1520"/>
+                <Setter Property="Foreground"      Value="{StaticResource CyberAccentBrush}"/>
+                <Setter Property="BorderBrush"     Value="{StaticResource BorderBrightBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontSize"        Value="11"/>
+                <Setter Property="Padding"         Value="8,5"/>
+            </Style>
+
+            <!-- ── TEXTBOX ──────────────────────────────────────────────── -->
+            <Style x:Key="HudTextBox" TargetType="TextBox">
+                <Setter Property="Background"      Value="#06101A"/>
+                <Setter Property="Foreground"      Value="{StaticResource CyberAccentBrush}"/>
+                <Setter Property="BorderBrush"     Value="{StaticResource BorderBrightBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"         Value="6,5"/>
+                <Setter Property="CaretBrush"      Value="{StaticResource CyberAccentBrush}"/>
+            </Style>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>
