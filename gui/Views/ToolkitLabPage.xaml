@@ -1,4 +1,4 @@
-<UserControl x:Class="SoftcurseMediaLabAI.Views.ToolkitLabPage"
+﻿<UserControl x:Class="SoftcurseMediaLabAI.Views.ToolkitLabPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.modernwpf.com/2019"
@@ -100,12 +100,17 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
+                        <Button Grid.Column="0" Content="📂 LOAD" Height="30" Margin="0,0,12,0"
+                                Style="{StaticResource BtnOutline}" Padding="10,0"
+                                Click="ResizerBrowse_Click" ToolTip="Load another image"/>
+
                         <!-- Dimensions -->
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,16,0">
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,16,0">
                             <StackPanel Margin="0,0,6,0">
                                 <TextBlock Text="WIDTH" FontSize="9" Foreground="{StaticResource TextDimBrush}"
                                            FontFamily="Segoe UI" Margin="0,0,0,2"/>
@@ -127,7 +132,7 @@
                         </StackPanel>
 
                         <!-- Percentage -->
-                        <StackPanel Grid.Column="1" Margin="0,0,16,0">
+                        <StackPanel Grid.Column="2" Margin="0,0,16,0">
                             <TextBlock Text="SCALE %" FontSize="9" Foreground="{StaticResource TextDimBrush}"
                                        FontFamily="Segoe UI" Margin="0,0,0,2"/>
                             <StackPanel Orientation="Horizontal">
@@ -142,7 +147,7 @@
                         </StackPanel>
 
                         <!-- Presets -->
-                        <StackPanel Grid.Column="2" Margin="0,0,16,0">
+                        <StackPanel Grid.Column="3" Margin="0,0,16,0">
                             <TextBlock Text="PRESETS" FontSize="9" Foreground="{StaticResource TextDimBrush}"
                                        FontFamily="Segoe UI" Margin="0,0,0,2"/>
                             <ComboBox x:Name="PresetCombo" Width="160" Height="26"
@@ -160,12 +165,12 @@
                         </StackPanel>
 
                         <!-- Info -->
-                        <TextBlock x:Name="ResizerInfo" Grid.Column="3" Text=""
+                        <TextBlock x:Name="ResizerInfo" Grid.Column="4" Text=""
                                    FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"
                                    Foreground="{StaticResource TextDimBrush}"/>
 
                         <!-- Action -->
-                        <Button Grid.Column="4" Content="RESIZE &amp; SAVE" Height="32"
+                        <Button Grid.Column="5" Content="RESIZE &amp; SAVE" Height="32"
                                 Style="{StaticResource BtnPrimary}" Padding="16,0"
                                 Click="ResizeSave_Click"/>
                     </Grid>
@@ -340,6 +345,9 @@
                 <Border Grid.Row="2" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
                         BorderThickness="1" Padding="14,10">
                     <StackPanel Orientation="Horizontal">
+                        <Button Content="📂 LOAD" Height="30" Margin="0,0,12,0"
+                                Style="{StaticResource BtnOutline}" Padding="10,0"
+                                Click="PaletteBrowse_Click" ToolTip="Load another image"/>
                         <TextBlock Text="COLORS:" FontSize="9" FontWeight="Bold" VerticalAlignment="Center"
                                    Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,0,8,0"/>
                         <ComboBox x:Name="PaletteCountCombo" Width="60" Height="26"
@@ -400,6 +408,9 @@
                 <Border Grid.Row="2" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
                         BorderThickness="1" Padding="14,10">
                     <StackPanel Orientation="Horizontal">
+                        <Button Content="📂 LOAD" Height="30" Margin="0,0,12,0"
+                                Style="{StaticResource BtnOutline}" Padding="10,0"
+                                Click="MetaBrowse_Click" ToolTip="Load another image"/>
                         <TextBlock Text="SET DPI:" FontSize="9" FontWeight="Bold" VerticalAlignment="Center"
                                    Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,0,8,0"/>
                         <TextBox x:Name="MetaDpiInput" Width="60" Height="26"
@@ -584,11 +595,15 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                        <Button Grid.Column="0" Content="📂 LOAD" Height="30" Margin="0,0,12,0"
+                                Style="{StaticResource BtnOutline}" Padding="10,0"
+                                Click="CropBrowse_Click" ToolTip="Load another image"/>
+                        <StackPanel Grid.Column="1" Margin="0,0,16,0">
                             <TextBlock Text="ASPECT RATIO" FontSize="9" Foreground="{StaticResource TextDimBrush}"
                                        FontFamily="Segoe UI" Margin="0,0,0,2"/>
                             <ComboBox x:Name="CropAspectCombo" Width="120" Height="26"
@@ -605,11 +620,11 @@
                             </ComboBox>
                         </StackPanel>
 
-                        <TextBlock x:Name="CropInfo" Grid.Column="1" Text="" VerticalAlignment="Center"
+                        <TextBlock x:Name="CropInfo" Grid.Column="2" Text="" VerticalAlignment="Center"
                                    FontSize="10" FontFamily="Consolas" Margin="0,0,16,0"
                                    Foreground="{StaticResource TextDimBrush}"/>
 
-                        <Button Grid.Column="3" Content="CROP &amp; SAVE" Height="32"
+                        <Button Grid.Column="4" Content="CROP &amp; SAVE" Height="32"
                                 Style="{StaticResource BtnPrimary}" Padding="16,0"
                                 Click="CropSave_Click"/>
                     </Grid>
