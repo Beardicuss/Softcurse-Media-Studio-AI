@@ -6,23 +6,24 @@
 
     <Grid Margin="16">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>   <!-- Title + Load -->
-            <RowDefinition Height="*"/>      <!-- Video canvas -->
-            <RowDefinition Height="Auto"/>   <!-- Controls -->
+            <RowDefinition Height="Auto"/>   <!-- Title + Mode toggle -->
+            <RowDefinition Height="*"/>      <!-- Content area -->
+            <RowDefinition Height="Auto"/>   <!-- Bottom controls -->
         </Grid.RowDefinitions>
 
-        <!-- ── TOP: Title + Load Video ── -->
+        <!-- ── TOP: Title + Mode Toggle ── -->
         <Border Grid.Row="0" Margin="0,0,0,10"
                 BorderBrush="{StaticResource BorderBrightBrush}" BorderThickness="0,0,0,1"
                 Padding="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="VIDEO LAB" FontSize="16" FontWeight="Bold"
+                <TextBlock Grid.Column="0" Text="FORGE LAB" FontSize="16" FontWeight="Bold"
                            Foreground="{StaticResource CyberAccentBrush}" VerticalAlignment="Center"
                            FontFamily="Segoe UI">
                     <TextBlock.Effect>
@@ -30,68 +31,312 @@
                     </TextBlock.Effect>
                 </TextBlock>
 
-                <TextBlock x:Name="VideoInfoText" Grid.Column="1" VerticalAlignment="Center"
-                           Text="AWAITING VIDEO INPUT..." Margin="16,0"
+                <!-- Mode toggle buttons -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="20,0,0,0" VerticalAlignment="Center">
+                    <ToggleButton x:Name="RetouchModeBtn" Content="RETOUCH" IsChecked="True"
+                                  Height="26" Padding="12,0" Margin="0,0,4,0"
+                                  Style="{StaticResource ToggleOutline}" FontSize="10"
+                                  Checked="RetouchMode_Checked"/>
+                    <ToggleButton x:Name="ConvertModeBtn" Content="CONVERT"
+                                  Height="26" Padding="12,0"
+                                  Style="{StaticResource ToggleOutline}" FontSize="10"
+                                  Checked="ConvertMode_Checked"/>
+                </StackPanel>
+
+                <TextBlock x:Name="VideoInfoText" Grid.Column="2" VerticalAlignment="Center"
+                           Text="AWAITING INPUT..." Margin="16,0"
                            Foreground="{StaticResource TextDimBrush}" FontSize="11" FontFamily="Consolas"/>
 
-                <Button Grid.Column="2" Content="LOAD VIDEO" Click="SelectVideo_Click"
+                <Button x:Name="LoadVideoBtn" Grid.Column="3" Content="LOAD VIDEO" Click="SelectVideo_Click"
                         Style="{StaticResource BtnOutline}" Padding="14,6"/>
             </Grid>
         </Border>
 
-        <!-- ── VIDEO CANVAS ── -->
-        <Border Grid.Row="1" BorderBrush="{StaticResource BorderBrightBrush}"
-                BorderThickness="1" Background="#071018" ClipToBounds="True"
-                Margin="0,0,0,10">
-            <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Auto" PanningMode="Both">
-                <Grid x:Name="ImageContainer" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Image x:Name="FirstFrameDisplay" Stretch="None"
-                           RenderOptions.BitmapScalingMode="HighQuality"/>
-                    <InkCanvas x:Name="MaskInkCanvas" Background="Transparent" Visibility="Collapsed">
-                        <InkCanvas.DefaultDrawingAttributes>
-                            <DrawingAttributes Color="#CC00AAFF" Width="20" Height="20" FitToCurve="True"/>
-                        </InkCanvas.DefaultDrawingAttributes>
-                    </InkCanvas>
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <!-- RETOUCH MODE PANEL -->
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <Grid x:Name="RetouchPanel" Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- VIDEO CANVAS -->
+            <Border Grid.Row="0" BorderBrush="{StaticResource BorderBrightBrush}"
+                    BorderThickness="1" Background="#071018" ClipToBounds="True"
+                    Margin="0,0,0,10">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto" PanningMode="Both">
+                    <Grid x:Name="ImageContainer" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Image x:Name="FirstFrameDisplay" Stretch="None"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <InkCanvas x:Name="MaskInkCanvas" Background="Transparent" Visibility="Collapsed">
+                            <InkCanvas.DefaultDrawingAttributes>
+                                <DrawingAttributes Color="#CC00AAFF" Width="20" Height="20" FitToCurve="True"/>
+                            </InkCanvas.DefaultDrawingAttributes>
+                        </InkCanvas>
+                    </Grid>
+                </ScrollViewer>
+            </Border>
+
+            <!-- RETOUCH BOTTOM CONTROLS -->
+            <Border Grid.Row="1" BorderBrush="{StaticResource BorderBrightBrush}"
+                    BorderThickness="1" Background="#071018" Padding="12,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <TextBlock Text="BRUSH SIZE:" VerticalAlignment="Center" Margin="0,0,8,0"
+                                   Foreground="{StaticResource TextDimBrush}" FontSize="10"
+                                   FontWeight="Bold" FontFamily="Segoe UI"/>
+                        <Slider x:Name="BrushSizeSlider" Minimum="5" Maximum="100" Value="20" Width="120"
+                                VerticalAlignment="Center" ValueChanged="BrushSize_ValueChanged"
+                                Foreground="{StaticResource CyberAccentBrush}"/>
+                    </StackPanel>
+
+                    <Border Grid.Column="1" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                            Background="Transparent" Margin="15,0" Padding="4">
+                        <ProgressBar x:Name="VideoProgressBar" Height="18" Minimum="0" Maximum="100"
+                                     Foreground="{StaticResource CyberAccentBrush}" Background="Transparent"/>
+                    </Border>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button Content="CLEAR MASK" Click="ClearMask_Click" Margin="0,0,8,0"
+                                Style="{StaticResource BtnDanger}" Padding="12,6"/>
+                        <Button x:Name="ProcessVideoButton" Content="INPAINT VIDEO" Click="ProcessVideo_Click"
+                                Style="{StaticResource BtnPrimary}" Padding="14,6" IsEnabled="False"/>
+                        <Button x:Name="CancelProcessButton" Content="CANCEL" Click="CancelProcess_Click"
+                                Margin="8,0,0,0" Visibility="Collapsed"
+                                Style="{StaticResource BtnDanger}" Padding="12,6"/>
+                    </StackPanel>
                 </Grid>
-            </ScrollViewer>
-        </Border>
+            </Border>
+        </Grid>
 
-        <!-- ── BOTTOM CONTROLS ── -->
-        <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrightBrush}"
-                BorderThickness="1" Background="#071018" Padding="12,8">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <!-- CONVERT MODE PANEL -->
+        <!-- ══════════════════════════════════════════════════════════════ -->
+        <Grid x:Name="ConvertPanel" Grid.Row="1" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>  <!-- File list -->
+                <ColumnDefinition Width="2*"/>  <!-- Settings -->
+            </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <TextBlock Text="BRUSH SIZE:" VerticalAlignment="Center" Margin="0,0,8,0"
-                               Foreground="{StaticResource TextDimBrush}" FontSize="10"
-                               FontWeight="Bold" FontFamily="Segoe UI"/>
-                    <Slider x:Name="BrushSizeSlider" Minimum="5" Maximum="100" Value="20" Width="120"
-                            VerticalAlignment="Center" ValueChanged="BrushSize_ValueChanged"
-                            Foreground="{StaticResource CyberAccentBrush}"/>
-                </StackPanel>
+            <!-- LEFT: File list -->
+            <Border Grid.Column="0" Background="#071018" Padding="12,10"
+                    BorderBrush="{StaticResource BorderBrightBrush}" BorderThickness="1"
+                    Margin="0,0,6,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                <Border Grid.Column="1" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                        Background="Transparent" Margin="15,0" Padding="4">
-                    <ProgressBar x:Name="VideoProgressBar" Height="18" Minimum="0" Maximum="100"
-                                 Foreground="{StaticResource CyberAccentBrush}" Background="Transparent"/>
-                </Border>
+                    <TextBlock Grid.Row="0" Text="INPUT FILES" FontSize="10" FontWeight="Bold"
+                               Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"
+                               Margin="0,0,0,6"/>
 
-                <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <Button Content="CLEAR MASK" Click="ClearMask_Click" Margin="0,0,8,0"
-                            Style="{StaticResource BtnDanger}" Padding="12,6"/>
-                    <Button x:Name="ProcessVideoButton" Content="INPAINT VIDEO" Click="ProcessVideo_Click"
-                            Style="{StaticResource BtnPrimary}" Padding="14,6" IsEnabled="False"/>
-                    <Button x:Name="CancelProcessButton" Content="CANCEL" Click="CancelProcess_Click"
-                            Margin="8,0,0,0" Visibility="Collapsed"
-                            Style="{StaticResource BtnDanger}" Padding="12,6"/>
-                </StackPanel>
-            </Grid>
-        </Border>
+                    <Border Grid.Row="1" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                        <ListBox x:Name="ConvertFileList" Background="#0A0E1A"
+                                 Foreground="{StaticResource TextBrush}"
+                                 FontFamily="Consolas" FontSize="11"
+                                 BorderThickness="0"
+                                 SelectionMode="Extended"/>
+                    </Border>
+
+                    <TextBlock x:Name="FileCountText" Grid.Row="2" Text="" FontSize="10"
+                               Foreground="{StaticResource TextDimBrush}" FontFamily="Consolas"
+                               Margin="0,4,0,0"/>
+
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,6,0,0">
+                        <Button Content="+ FILES" Click="AddFiles_Click" Margin="0,0,4,0"
+                                Style="{StaticResource BtnOutline}" Padding="10,4" FontSize="10"/>
+                        <Button Content="📁 FOLDER" Click="AddFolder_Click" Margin="0,0,4,0"
+                                Style="{StaticResource BtnOutline}" Padding="10,4" FontSize="10"/>
+                        <Button Content="✕ REMOVE" Click="RemoveSelected_Click" Margin="0,0,4,0"
+                                Style="{StaticResource BtnOutline}" Padding="10,4" FontSize="10"/>
+                        <Button Content="⊘ CLEAR" Click="ClearFiles_Click"
+                                Style="{StaticResource BtnDanger}" Padding="10,4" FontSize="10"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- RIGHT: Settings -->
+            <Border Grid.Column="1" Background="#071018" Padding="14,10"
+                    BorderBrush="{StaticResource BorderBrightBrush}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Output Format -->
+                    <TextBlock Grid.Row="0" Text="OUTPUT FORMAT" FontSize="9" FontWeight="Bold"
+                               Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI"
+                               Margin="0,0,0,4"/>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+                        <ComboBox x:Name="TypeModeCombo" Width="90" Height="26"
+                                  Style="{StaticResource HudComboBox}" SelectedIndex="0"
+                                  SelectionChanged="TypeMode_Changed">
+                            <ComboBoxItem Content="AUDIO"/>
+                            <ComboBoxItem Content="VIDEO"/>
+                        </ComboBox>
+                        <ComboBox x:Name="OutputFormatCombo" Width="90" Height="26" Margin="6,0,0,0"
+                                  Style="{StaticResource HudComboBox}" SelectedIndex="0">
+                            <ComboBoxItem Content="mp3"/>
+                            <ComboBoxItem Content="wav"/>
+                            <ComboBoxItem Content="flac"/>
+                            <ComboBoxItem Content="aac"/>
+                            <ComboBoxItem Content="ogg"/>
+                            <ComboBoxItem Content="opus"/>
+                            <ComboBoxItem Content="m4a"/>
+                            <ComboBoxItem Content="wma"/>
+                            <ComboBoxItem Content="aiff"/>
+                            <ComboBoxItem Content="ac3"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Audio Settings -->
+                    <StackPanel x:Name="AudioSettingsPanel" Grid.Row="2" Margin="0,0,0,6">
+                        <TextBlock Text="AUDIO SETTINGS" FontSize="9" FontWeight="Bold"
+                                   Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI"
+                                   Margin="0,0,0,4"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <StackPanel Margin="0,0,10,0">
+                                <TextBlock Text="Bitrate" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                           FontFamily="Segoe UI" Margin="0,0,0,2"/>
+                                <ComboBox x:Name="AudioBitrateCombo" Width="80" Height="24"
+                                          Style="{StaticResource HudComboBox}" SelectedIndex="2">
+                                    <ComboBoxItem Content="320k"/>
+                                    <ComboBoxItem Content="256k"/>
+                                    <ComboBoxItem Content="192k"/>
+                                    <ComboBoxItem Content="128k"/>
+                                    <ComboBoxItem Content="96k"/>
+                                    <ComboBoxItem Content="64k"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,10,0">
+                                <TextBlock Text="Sample Rate" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                           FontFamily="Segoe UI" Margin="0,0,0,2"/>
+                                <ComboBox x:Name="SampleRateCombo" Width="80" Height="24"
+                                          Style="{StaticResource HudComboBox}" SelectedIndex="0">
+                                    <ComboBoxItem Content="44100"/>
+                                    <ComboBoxItem Content="48000"/>
+                                    <ComboBoxItem Content="22050"/>
+                                    <ComboBoxItem Content="16000"/>
+                                    <ComboBoxItem Content="8000"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Channels" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                           FontFamily="Segoe UI" Margin="0,0,0,2"/>
+                                <ComboBox x:Name="ChannelsCombo" Width="80" Height="24"
+                                          Style="{StaticResource HudComboBox}" SelectedIndex="0">
+                                    <ComboBoxItem Content="Stereo"/>
+                                    <ComboBoxItem Content="Mono"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Video Settings -->
+                    <StackPanel x:Name="VideoSettingsPanel" Grid.Row="3" Margin="0,0,0,6" Visibility="Collapsed">
+                        <TextBlock Text="VIDEO SETTINGS" FontSize="9" FontWeight="Bold"
+                                   Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI"
+                                   Margin="0,0,0,4"/>
+                        <StackPanel Margin="0,0,0,4">
+                            <TextBlock Text="Resolution" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                       FontFamily="Segoe UI" Margin="0,0,0,2"/>
+                            <ComboBox x:Name="ResolutionCombo" Width="180" Height="24"
+                                      Style="{StaticResource HudComboBox}" SelectedIndex="0"
+                                      HorizontalAlignment="Left">
+                                <ComboBoxItem Content="Original"/>
+                                <ComboBoxItem Content="3840:2160 (4K)"/>
+                                <ComboBoxItem Content="1920:1080 (1080p)"/>
+                                <ComboBoxItem Content="1280:720 (720p)"/>
+                                <ComboBoxItem Content="854:480 (480p)"/>
+                                <ComboBoxItem Content="640:360 (360p)"/>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <StackPanel Margin="0,0,10,0">
+                                <TextBlock Text="Quality" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                           FontFamily="Segoe UI" Margin="0,0,0,2"/>
+                                <ComboBox x:Name="QualityCombo" Width="130" Height="24"
+                                          Style="{StaticResource HudComboBox}" SelectedIndex="1">
+                                    <ComboBoxItem Content="High (CRF 18)"/>
+                                    <ComboBoxItem Content="Medium (CRF 23)"/>
+                                    <ComboBoxItem Content="Low (CRF 28)"/>
+                                    <ComboBoxItem Content="Very Low (CRF 35)"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Audio Bitrate" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                           FontFamily="Segoe UI" Margin="0,0,0,2"/>
+                                <ComboBox x:Name="VidAudioBitrateCombo" Width="80" Height="24"
+                                          Style="{StaticResource HudComboBox}" SelectedIndex="2">
+                                    <ComboBoxItem Content="320k"/>
+                                    <ComboBoxItem Content="256k"/>
+                                    <ComboBoxItem Content="192k"/>
+                                    <ComboBoxItem Content="128k"/>
+                                    <ComboBoxItem Content="96k"/>
+                                    <ComboBoxItem Content="64k"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Output Folder -->
+                    <StackPanel Grid.Row="4" Margin="0,0,0,6">
+                        <TextBlock Text="OUTPUT FOLDER" FontSize="9" FontWeight="Bold"
+                                   Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI"
+                                   Margin="0,0,0,4"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="OutputFolderBox" Grid.Column="0" Height="26"
+                                     Background="#0A0E1A" Foreground="{StaticResource TextBrush}"
+                                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                     FontFamily="Consolas" FontSize="10" Padding="4,4"
+                                     VerticalContentAlignment="Center"/>
+                            <Button Grid.Column="1" Content="BROWSE" Click="BrowseOutput_Click"
+                                    Style="{StaticResource BtnOutline}" Padding="10,4" FontSize="10"
+                                    Margin="4,0,0,0" Height="26"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Spacer -->
+                    <Grid Grid.Row="5"/>
+
+                    <!-- Convert button + progress -->
+                    <StackPanel Grid.Row="6">
+                        <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                Margin="0,0,0,6" Padding="4">
+                            <ProgressBar x:Name="ConvertProgressBar" Height="16" Minimum="0" Maximum="100"
+                                         Foreground="{StaticResource CyberAccentBrush}" Background="Transparent"/>
+                        </Border>
+                        <TextBlock x:Name="ConvertStatusText" Text="Ready — add files to begin."
+                                   FontSize="10" Foreground="{StaticResource TextDimBrush}"
+                                   FontFamily="Consolas" Margin="0,0,0,6"/>
+                        <Button x:Name="ConvertAllBtn" Content="▶  CONVERT ALL" Click="ConvertAll_Click"
+                                Style="{StaticResource BtnPrimary}" Padding="14,8" FontSize="12"
+                                HorizontalAlignment="Stretch" FontWeight="Bold"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

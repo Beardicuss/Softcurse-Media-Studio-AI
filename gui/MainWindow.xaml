@@ -229,7 +229,7 @@
                                 </StackPanel>
                             </Button>
 
-                            <!-- VIDEO LAB — from softcurse-icons.html: play button + film perfs + ring -->
+                            <!-- FORGE LAB — from softcurse-icons.html: play button + film perfs + ring -->
                             <Button x:Name="NavVideo" Tag="VideoPage"
                                     Style="{StaticResource NavItemStyle}"
                                     Click="NavButton_Click">
@@ -269,7 +269,7 @@
                                                        Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" RadiusX="0.5" RadiusY="0.5" Opacity="0.6"/>
                                         </Canvas>
                                     </Viewbox>
-                                    <TextBlock Text="VIDEO LAB" FontSize="10" FontWeight="Bold"
+                                    <TextBlock Text="FORGE LAB" FontSize="10" FontWeight="Bold"
                                                HorizontalAlignment="Center"
                                                FontFamily="Segoe UI"/>
                                 </StackPanel>

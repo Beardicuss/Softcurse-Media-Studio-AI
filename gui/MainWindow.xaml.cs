@@ -67,7 +67,7 @@ namespace GeminiWatermarkRemover
             };
             MPInnerRotate.BeginAnimation(RotateTransform.AngleProperty, mpInnerSpin);
 
-            // Video Lab: play triangle breathing scale (2s cycle)
+            // Forge Lab: play triangle breathing scale (2s cycle)
             var vlBreathX = new DoubleAnimation(1, 0.85, TimeSpan.FromSeconds(1))
             {
                 AutoReverse = true,

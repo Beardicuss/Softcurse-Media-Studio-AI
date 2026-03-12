@@ -6,7 +6,42 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ui:ThemeResources RequestedTheme="Dark" />
+                <ui:ThemeResources RequestedTheme="Dark">
+                    <ui:ThemeResources.MergedDictionaries>
+                        <ResourceDictionary>
+                            <SolidColorBrush x:Key="ComboBoxBackground" Color="#0A1520"/>
+                            <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#0E1A28"/>
+                            <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#0E1A28"/>
+                            <SolidColorBrush x:Key="ComboBoxBackgroundDisabled" Color="#060D14"/>
+                            <SolidColorBrush x:Key="ComboBoxBackgroundFocused" Color="#0A1520"/>
+                            <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="#0A1520"/>
+                            <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#0A1520"/>
+                            <SolidColorBrush x:Key="ComboBoxForeground" Color="#00E5FF"/>
+                            <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="#00E5FF"/>
+                            <SolidColorBrush x:Key="ComboBoxForegroundPressed" Color="#00E5FF"/>
+                            <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="#00E5FF"/>
+                            <SolidColorBrush x:Key="ComboBoxForegroundDisabled" Color="#557788"/>
+                            <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#1A6A9A"/>
+                            <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#00E5FF"/>
+                            <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#00E5FF"/>
+                            <SolidColorBrush x:Key="ComboBoxBorderBrushDisabled" Color="#0D3A5C"/>
+                            <SolidColorBrush x:Key="ComboBoxDropDownForeground" Color="#00E5FF"/>
+                            <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#1A6A9A"/>
+                            <SolidColorBrush x:Key="ComboBoxItemForeground" Color="#9AC8D8"/>
+                            <SolidColorBrush x:Key="ComboBoxItemForegroundPointerOver" Color="#00E5FF"/>
+                            <SolidColorBrush x:Key="ComboBoxItemForegroundSelected" Color="#00E5FF"/>
+                            <SolidColorBrush x:Key="ComboBoxItemForegroundSelectedPointerOver" Color="#00E5FF"/>
+                            <SolidColorBrush x:Key="ComboBoxItemForegroundPressed" Color="#00E5FF"/>
+                            <SolidColorBrush x:Key="ComboBoxItemBackgroundSelected" Color="#1A4060"/>
+                            <SolidColorBrush x:Key="ComboBoxItemBackgroundPointerOver" Color="#153040"/>
+                            <SolidColorBrush x:Key="ComboBoxItemBackgroundSelectedPointerOver" Color="#1A4060"/>
+                            <SolidColorBrush x:Key="ComboBoxItemBackgroundPressed" Color="#153040"/>
+                            <SolidColorBrush x:Key="ComboBoxDropDownGlyphForeground" Color="#00E5FF"/>
+                            <SolidColorBrush x:Key="ComboBoxEditableDropDownGlyphForeground" Color="#00E5FF"/>
+                            <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused" Color="#00E5FF"/>
+                        </ResourceDictionary>
+                    </ui:ThemeResources.MergedDictionaries>
+                </ui:ThemeResources>
                 <ui:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
 
@@ -190,8 +225,8 @@
             </Style>
 
             <!-- ── COMBO BOX ───────────────────────────────────────────── -->
-            <Style x:Key="HudComboBox" TargetType="ComboBox">
-                <Setter Property="Background"      Value="{DynamicResource ComboBoxBackground}"/>
+            <Style x:Key="HudComboBox" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                <Setter Property="Background"      Value="#0A1520"/>
                 <Setter Property="Foreground"      Value="{StaticResource CyberAccentBrush}"/>
                 <Setter Property="BorderBrush"     Value="{StaticResource BorderBrightBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>

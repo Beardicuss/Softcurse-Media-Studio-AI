@@ -5,6 +5,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>SoftcurseMediaStudioAI</AssemblyName>
     <ApplicationTitle>Softcurse Media Studio AI</ApplicationTitle>
     <!-- F-08: required for unsafe pointer tensor fill in WatermarkService -->

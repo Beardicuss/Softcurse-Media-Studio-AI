@@ -31,22 +31,17 @@
                     <ComboBox x:Name="ToolComboBox" Width="145" Height="30" SelectedIndex="0"
                               SelectionChanged="ToolComboBox_SelectionChanged"
                               Style="{StaticResource HudComboBox}">
-                        <ComboBoxItem Content="AUTO MODE" />
+                        <ComboBoxItem Content="EDITOR" />
                         <ComboBoxItem Content="CYBER BRUSH" />
                         <ComboBoxItem Content="ERASER" />
                         <ComboBoxItem Content="POLY LASSO" />
                         <ComboBoxItem Content="MAGIC WAND" />
+                        <ComboBoxItem Content="MOVE" />
+                        <ComboBoxItem Content="COLOR PICKER" />
+                        <ComboBoxItem Content="GRADIENT" />
+                        <ComboBoxItem Content="TEXT" />
+                        <ComboBoxItem Content="LAYER MASK" />
                     </ComboBox>
-
-                    <!-- Separator pip -->
-                    <Rectangle Width="1" Height="20" Fill="{StaticResource BorderBrush}" Margin="12,0"/>
-
-                    <!-- Mini square icon button (mode extra info) -->
-                    <Button x:Name="ModeInfoButton" Width="30" Height="30" Margin="0,0,8,0"
-                            Style="{StaticResource BtnOutline}" Padding="0">
-                        <TextBlock Text="⬡" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Foreground="{StaticResource CyberAccentBrush}"/>
-                    </Button>
                 </StackPanel>
 
                 <!-- Center: Core action buttons -->
@@ -68,10 +63,31 @@
                             Style="{StaticResource BtnOutline}" Padding="14,0"
                             Click="Upscale_Click" IsEnabled="False"/>
 
+                    <Rectangle Width="1" Height="20" Fill="{StaticResource BorderBrush}" Margin="0,0,6,0"/>
+
+                    <Button x:Name="FilterBlurButton" Content="BLUR" Height="30" Margin="0,0,4,0"
+                            Style="{StaticResource BtnOutline}" Padding="10,0" FontSize="11"
+                            Click="FilterBlur_Click" IsEnabled="False" ToolTip="Gaussian Blur"/>
+                    <Button x:Name="FilterSharpenButton" Content="SHARP" Height="30" Margin="0,0,4,0"
+                            Style="{StaticResource BtnOutline}" Padding="10,0" FontSize="11"
+                            Click="FilterSharpen_Click" IsEnabled="False" ToolTip="Sharpen"/>
+                    <Button x:Name="FilterNoiseButton" Content="NOISE" Height="30" Margin="0,0,6,0"
+                            Style="{StaticResource BtnOutline}" Padding="10,0" FontSize="11"
+                            Click="FilterNoise_Click" IsEnabled="False" ToolTip="Add Noise"/>
+
                 </StackPanel>
 
-                <!-- Right: Save / Copy / Compare / Reset -->
+                <!-- Right: Undo/Redo + Save / Copy / Compare / Reset -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+
+                    <Button x:Name="UndoButton" Content="↶" Height="30" Width="30" Margin="0,0,4,0"
+                            Style="{StaticResource BtnOutline}" Padding="0" FontSize="16"
+                            Click="Undo_Click" ToolTip="Undo (Ctrl+Z)" IsEnabled="False"/>
+                    <Button x:Name="RedoButton" Content="↷" Height="30" Width="30" Margin="0,0,8,0"
+                            Style="{StaticResource BtnOutline}" Padding="0" FontSize="16"
+                            Click="Redo_Click" ToolTip="Redo (Ctrl+Shift+Z)" IsEnabled="False"/>
+
+                    <Rectangle Width="1" Height="20" Fill="{StaticResource BorderBrush}" Margin="0,0,8,0"/>
 
                     <Button x:Name="CopyButton" Content="COPY" Height="30" Margin="0,0,6,0"
                             Style="{StaticResource BtnOutline}" Padding="12,0"
@@ -79,7 +95,7 @@
 
                     <Button x:Name="SaveButton" Content="SAVE" Height="30" Margin="0,0,6,0"
                             Style="{StaticResource BtnOutline}" Padding="12,0"
-                            Click="Save_Click" IsEnabled="False"/>
+                            Click="Save_Click" IsEnabled="False" ToolTip="Ctrl+S"/>
 
                     <ToggleButton x:Name="CompareToggleButton" Content="COMPARE" Height="30" Margin="0,0,6,0"
                                   Style="{StaticResource ToggleOutline}" Padding="12,0"
@@ -115,6 +131,79 @@
                 <Button x:Name="ClearMaskButton" Content="CLEAR MASK" Height="26"
                         Style="{StaticResource BtnDanger}" Padding="10,0"
                         Click="ClearMask_Click" Visibility="Collapsed"/>
+            </StackPanel>
+
+            <!-- Gradient settings panel -->
+            <StackPanel x:Name="GradientSettingsPanel" Grid.Row="0" Orientation="Horizontal"
+                        Margin="0,0,0,6" Visibility="Collapsed">
+                <TextBlock Text="GRADIENT" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Foreground="{StaticResource TextDimBrush}" FontSize="10" FontFamily="Segoe UI" FontWeight="Bold"/>
+                <ComboBox x:Name="GradientTypeCombo" Width="100" Height="26" SelectedIndex="0"
+                          Style="{StaticResource HudComboBox}">
+                    <ComboBoxItem Content="LINEAR"/>
+                    <ComboBoxItem Content="RADIAL"/>
+                </ComboBox>
+                <TextBlock Text="|" Margin="8,0" Foreground="{StaticResource BorderBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="Uses FG → BG colors" VerticalAlignment="Center"
+                           Foreground="{StaticResource TextDimBrush}" FontSize="10" FontFamily="Segoe UI" Margin="0,0,8,0"/>
+                <Button Content="APPLY GRADIENT" Height="26"
+                        Style="{StaticResource BtnPrimary}" Padding="10,0"
+                        Click="ApplyGradient_Click"/>
+            </StackPanel>
+
+            <!-- Text settings panel -->
+            <StackPanel x:Name="TextSettingsPanel" Grid.Row="0" Orientation="Horizontal"
+                        Margin="0,0,0,6" Visibility="Collapsed">
+                <TextBlock Text="FONT" VerticalAlignment="Center" Margin="0,0,6,0"
+                           Foreground="{StaticResource TextDimBrush}" FontSize="10" FontFamily="Segoe UI" FontWeight="Bold"/>
+                <ComboBox x:Name="FontFamilyCombo" Width="120" Height="26" SelectedIndex="0"
+                          Style="{StaticResource HudComboBox}">
+                    <ComboBoxItem Content="Segoe UI"/>
+                    <ComboBoxItem Content="Arial"/>
+                    <ComboBoxItem Content="Consolas"/>
+                    <ComboBoxItem Content="Times New Roman"/>
+                    <ComboBoxItem Content="Impact"/>
+                    <ComboBoxItem Content="Georgia"/>
+                </ComboBox>
+                <TextBlock Text="SIZE" VerticalAlignment="Center" Margin="8,0,6,0"
+                           Foreground="{StaticResource TextDimBrush}" FontSize="10" FontFamily="Segoe UI" FontWeight="Bold"/>
+                <Slider x:Name="TextSizeSlider" Minimum="8" Maximum="120" Value="24" Width="100"
+                        VerticalAlignment="Center" Foreground="{StaticResource CyberAccentBrush}"/>
+                <TextBlock x:Name="TextSizeLabel" Text="24" VerticalAlignment="Center" Margin="4,0,8,0"
+                           Foreground="{StaticResource TextBrush}" FontSize="10" FontFamily="Consolas"/>
+                <TextBlock Text="|" Margin="0,0,8,0" Foreground="{StaticResource BorderBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="Uses FG color" VerticalAlignment="Center"
+                           Foreground="{StaticResource TextDimBrush}" FontSize="10" FontFamily="Segoe UI" Margin="0,0,8,0"/>
+                <Button Content="APPLY TEXT" Height="26"
+                        Style="{StaticResource BtnPrimary}" Padding="10,0"
+                        Click="ApplyText_Click"/>
+            </StackPanel>
+
+            <!-- Layer Mask settings panel -->
+            <StackPanel x:Name="LayerMaskPanel" Grid.Row="0" Orientation="Horizontal"
+                        Margin="0,0,0,6" Visibility="Collapsed">
+                <TextBlock Text="LAYER MASK" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Foreground="{StaticResource TextDimBrush}" FontSize="10" FontFamily="Segoe UI" FontWeight="Bold"/>
+                <TextBlock Text="BRUSH" VerticalAlignment="Center" Margin="0,0,4,0"
+                           Foreground="{StaticResource TextDimBrush}" FontSize="10" FontFamily="Segoe UI"/>
+                <Slider x:Name="MaskBrushSizeSlider" Minimum="5" Maximum="100" Value="30" Width="100"
+                        VerticalAlignment="Center" Foreground="{StaticResource CyberAccentBrush}"/>
+                <TextBlock Text="|" Margin="8,0" Foreground="{StaticResource BorderBrush}" VerticalAlignment="Center"/>
+                <ToggleButton x:Name="MaskColorToggle" Content="WHITE (REVEAL)" Height="26" Margin="0,0,6,0"
+                              Style="{StaticResource ToggleOutline}" Padding="8,0" FontSize="10"
+                              Checked="MaskColorToggle_Checked" Unchecked="MaskColorToggle_Unchecked"
+                              ToolTip="Toggle: White reveals, Black hides"/>
+                <TextBlock Text="|" Margin="0,0,8,0" Foreground="{StaticResource BorderBrush}" VerticalAlignment="Center"/>
+                <ToggleButton x:Name="ShowMaskToggle" Content="SHOW MASK" Height="26" Margin="0,0,6,0"
+                              Style="{StaticResource ToggleOutline}" Padding="8,0" FontSize="10"
+                              Checked="ShowMask_Checked" Unchecked="ShowMask_Unchecked"
+                              ToolTip="Toggle mask overlay visibility"/>
+                <Button Content="FLATTEN" Height="26" Margin="0,0,4,0"
+                        Style="{StaticResource BtnPrimary}" Padding="10,0"
+                        Click="FlattenMask_Click" ToolTip="Apply mask permanently to image"/>
+                <Button Content="CLEAR" Height="26"
+                        Style="{StaticResource BtnDanger}" Padding="10,0"
+                        Click="ClearLayerMask_Click" ToolTip="Reset mask to fully visible"/>
             </StackPanel>
 
             <!-- HUD canvas frame -->
@@ -244,58 +333,40 @@
                     <ColumnDefinition Width="Auto"/> <!-- Load + hint -->
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: API status + sliders -->
+                <!-- Left: Status + Zoom controls -->
                 <Grid Grid.Column="0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- API status line -->
+                    <!-- Status line -->
                     <TextBlock x:Name="StatusText" Grid.Row="0"
                                Text="SYSTEM READY"
                                Foreground="{StaticResource CyberAccentBrush}"
                                FontFamily="Consolas" FontSize="11"
                                Margin="0,0,0,6"/>
 
-                    <!-- Auto Detail slider row -->
-                    <Grid Grid.Row="1" Margin="0,0,0,4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="90"/>
-                            <ColumnDefinition Width="200"/>
-                            <ColumnDefinition Width="40"/>
-                            <ColumnDefinition Width="30"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Auto Detail" FontSize="10"
-                                   Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"
-                                   FontFamily="Segoe UI"/>
-                        <Slider Grid.Column="1" Minimum="0" Maximum="100" Value="50"
-                                Foreground="{StaticResource CyberAccentBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="2" Text="50" FontSize="10" Foreground="{StaticResource TextDimBrush}"
-                                   VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Consolas"/>
-                        <TextBlock Grid.Column="3" Text="5" FontSize="10" Foreground="{StaticResource TextDimBrush}"
-                                   VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Consolas"/>
-                    </Grid>
-
-                    <!-- Feather Radius slider row -->
-                    <Grid Grid.Row="2">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="90"/>
-                            <ColumnDefinition Width="200"/>
-                            <ColumnDefinition Width="40"/>
-                            <ColumnDefinition Width="30"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Feather Radius" FontSize="10"
-                                   Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"
-                                   FontFamily="Segoe UI"/>
-                        <Slider Grid.Column="1" Minimum="0" Maximum="100" Value="50"
-                                Foreground="{StaticResource CyberAccentBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="2" Text="50" FontSize="10" Foreground="{StaticResource TextDimBrush}"
-                                   VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Consolas"/>
-                        <TextBlock Grid.Column="3" Text="4" FontSize="10" Foreground="{StaticResource TextDimBrush}"
-                                   VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="Consolas"/>
-                    </Grid>
+                    <!-- Zoom controls -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal">
+                        <TextBlock Text="ZOOM" FontSize="10" FontWeight="Bold" VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,0,8,0"/>
+                        <Button Content="FIT" Height="24" Width="36" Margin="0,0,4,0"
+                                Style="{StaticResource BtnOutline}" Padding="0" FontSize="9"
+                                Click="ZoomFit_Click" ToolTip="Fit to Screen (Ctrl+0)"/>
+                        <Button Content="100%" Height="24" Width="42" Margin="0,0,4,0"
+                                Style="{StaticResource BtnOutline}" Padding="0" FontSize="9"
+                                Click="Zoom100_Click" ToolTip="Actual Size (Ctrl+1)"/>
+                        <Button Content="−" Height="24" Width="24" Margin="0,0,2,0"
+                                Style="{StaticResource BtnOutline}" Padding="0" FontSize="14"
+                                Click="ZoomOut_Click" ToolTip="Zoom Out (-)"/>
+                        <Button Content="+" Height="24" Width="24" Margin="0,0,8,0"
+                                Style="{StaticResource BtnOutline}" Padding="0" FontSize="14"
+                                Click="ZoomIn_Click" ToolTip="Zoom In (+)"/>
+                        <TextBlock x:Name="ZoomLevelText" Text="100%" FontSize="10"
+                                   Foreground="{StaticResource TextBrush}" FontFamily="Consolas"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
                 </Grid>
 
                 <!-- Center: Tool icon strip -->
@@ -304,30 +375,24 @@
                         Padding="16,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
 
-                        <!-- AUTO tool -->
+                        <!-- EDITOR tool -->
                         <StackPanel Margin="0,0,12,0" Cursor="Hand"
-                                    MouseLeftButtonDown="ToolIcon_Auto_Click">
-                            <Border x:Name="AutoToolBorder" Background="#1500E5FF" BorderBrush="{StaticResource CyberAccentBrush}"
+                                    MouseLeftButtonDown="ToolIcon_Editor_Click">
+                            <Border x:Name="EditorToolBorder" Background="#1500E5FF" BorderBrush="{StaticResource CyberAccentBrush}"
                                     BorderThickness="1" Padding="6">
                                 <Border.Effect>
                                     <DropShadowEffect Color="#00E5FF" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
                                 </Border.Effect>
                                 <Viewbox Width="28" Height="28">
                                     <Canvas Width="30" Height="30">
-                                        <!-- Lightning bolt from softcurse-icons -->
-                                        <Polygon Points="8,4 22,4 18,14 24,14 14,27 10,17 4,17"
+                                        <!-- Cursor/pointer icon -->
+                                        <Polygon Points="6,4 6,22 12,17 18,24 21,22 15,15 22,15"
                                                  Stroke="#00E5FF" StrokeThickness="1.2" Fill="#0A1830"/>
                                     </Canvas>
                                 </Viewbox>
                             </Border>
-                            <TextBlock Text="AUTO" FontSize="8" FontWeight="Bold" HorizontalAlignment="Center"
+                            <TextBlock Text="EDITOR" FontSize="8" FontWeight="Bold" HorizontalAlignment="Center"
                                        Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI" Margin="0,3,0,0"/>
-                        </StackPanel>
-
-                        <!-- AUTO DETAIL sub-label -->
-                        <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
-                            <TextBlock Text="↺ AUTO DETAIL" FontSize="9" Foreground="{StaticResource TextDimBrush}"
-                                       FontFamily="Segoe UI" FontWeight="Bold"/>
                         </StackPanel>
 
                         <!-- CYBER BRUSH -->
@@ -399,7 +464,7 @@
                         </StackPanel>
 
                         <!-- MAGIC WAND -->
-                        <StackPanel Margin="0,0,0,0" Cursor="Hand"
+                        <StackPanel Margin="0,0,12,0" Cursor="Hand"
                                     MouseLeftButtonDown="ToolIcon_MagicWand_Click">
                             <Border x:Name="WandToolBorder" Background="#07101A" BorderBrush="{StaticResource BorderBrightBrush}"
                                     BorderThickness="1" Padding="6">
@@ -421,6 +486,67 @@
                                        Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,3,0,0"/>
                         </StackPanel>
 
+                        <!-- MOVE -->
+                        <StackPanel Margin="0,0,12,0" Cursor="Hand"
+                                    MouseLeftButtonDown="ToolIcon_Move_Click">
+                            <Border x:Name="MoveToolBorder" Background="#07101A" BorderBrush="{StaticResource BorderBrightBrush}"
+                                    BorderThickness="1" Padding="6">
+                                <Viewbox Width="28" Height="28">
+                                    <Canvas Width="30" Height="30">
+                                        <!-- Move arrows icon -->
+                                        <Line X1="15" Y1="4" X2="15" Y2="26" Stroke="#00E5FF" StrokeThickness="1.5"/>
+                                        <Line X1="4" Y1="15" X2="26" Y2="15" Stroke="#00E5FF" StrokeThickness="1.5"/>
+                                        <Polygon Points="15,3 12,8 18,8" Fill="#00E5FF"/>
+                                        <Polygon Points="15,27 12,22 18,22" Fill="#00E5FF"/>
+                                        <Polygon Points="3,15 8,12 8,18" Fill="#00E5FF"/>
+                                        <Polygon Points="27,15 22,12 22,18" Fill="#00E5FF"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Border>
+                            <TextBlock Text="MOVE" FontSize="8" FontWeight="Bold" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,3,0,0"/>
+                        </StackPanel>
+
+                        <!-- COLOR PICKER -->
+                        <StackPanel Margin="0,0,0,0" Cursor="Hand"
+                                    MouseLeftButtonDown="ToolIcon_ColorPicker_Click">
+                            <Border x:Name="ColorPickerToolBorder" Background="#07101A" BorderBrush="{StaticResource BorderBrightBrush}"
+                                    BorderThickness="1" Padding="6">
+                                <Viewbox Width="28" Height="28">
+                                    <Canvas Width="30" Height="30">
+                                        <!-- Eyedropper icon -->
+                                        <Line X1="8" Y1="22" X2="20" Y2="10" Stroke="#00E5FF" StrokeThickness="2"/>
+                                        <Ellipse Canvas.Left="17" Canvas.Top="5" Width="10" Height="10"
+                                                 Stroke="#00E5FF" StrokeThickness="1.2" Fill="#0A1830"/>
+                                        <Ellipse Canvas.Left="5" Canvas.Top="20" Width="5" Height="5" Fill="#C8973A"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Border>
+                            <TextBlock Text="COLOR" FontSize="8" FontWeight="Bold" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,3,0,0"/>
+                        </StackPanel>
+
+                        <!-- Separator -->
+                        <Rectangle Width="1" Height="36" Fill="{StaticResource BorderBrush}" Margin="12,0,12,0" VerticalAlignment="Center"/>
+
+                        <!-- Color swatches (FG/BG) -->
+                        <StackPanel VerticalAlignment="Center">
+                            <Grid Width="32" Height="32">
+                                <Border x:Name="BgColorSwatch" Width="20" Height="20"
+                                        Background="White" BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="1" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                        Cursor="Hand" MouseLeftButtonDown="BgColorSwatch_Click"
+                                        ToolTip="Background Color"/>
+                                <Border x:Name="FgColorSwatch" Width="20" Height="20"
+                                        Background="Black" BorderBrush="{StaticResource CyberAccentBrush}"
+                                        BorderThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                        Cursor="Hand" MouseLeftButtonDown="FgColorSwatch_Click"
+                                        ToolTip="Foreground Color"/>
+                            </Grid>
+                            <TextBlock Text="FG/BG" FontSize="7" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,2,0,0"/>
+                        </StackPanel>
+
                     </StackPanel>
                 </Border>
 
@@ -429,7 +555,7 @@
                     <Button Content="LOAD IMAGE" Height="30" Margin="0,0,0,6"
                             Style="{StaticResource BtnOutline}" Padding="14,0"
                             Click="SelectImage_Click"/>
-                    <TextBlock Text="CTRL + LEFT MOUSE CLICK / SCROLL (×) SHIFT"
+                    <TextBlock Text="B=Brush  E=Eraser  V=Move  M=Wand  Ctrl+Z=Undo"
                                FontSize="9" Foreground="{StaticResource TextDimBrush}"
                                FontFamily="Consolas" HorizontalAlignment="Center"/>
                 </StackPanel>

@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -21,6 +24,39 @@ namespace GeminiWatermarkRemover.Views
         private double _fps;
         private int    _totalFrames;
         private CancellationTokenSource? _cancellationTokenSource;
+
+        // ── Converter state ─────────────────────────────────────────────
+        private readonly List<string> _convertFiles = new();
+        private readonly HashSet<string> _convertFilesSet = new(StringComparer.OrdinalIgnoreCase);
+        private bool _isConverting;
+
+        private static readonly string[] AudioFormats = { "mp3", "wav", "flac", "aac", "ogg", "opus", "m4a", "wma", "aiff", "ac3" };
+        private static readonly string[] VideoFormats = { "mp4", "mkv", "avi", "mov", "webm", "ogv", "wmv", "flv", "m4v", "ts", "3gp" };
+        private static readonly string[] AudioBitrates = { "320k", "256k", "192k", "128k", "96k", "64k" };
+        private static readonly string[] SampleRates = { "44100", "48000", "22050", "16000", "8000" };
+        private static readonly string[] Resolutions = { "Original", "3840:2160 (4K)", "1920:1080 (1080p)", "1280:720 (720p)", "854:480 (480p)", "640:360 (360p)" };
+        private static readonly string[] Qualities = { "High (CRF 18)", "Medium (CRF 23)", "Low (CRF 28)", "Very Low (CRF 35)" };
+
+        // codec map: format -> (audio_codec, video_codec_or_null)
+        private static readonly Dictionary<string, (string acodec, string? vcodec)> CodecMap = new()
+        {
+            ["mp3"]  = ("libmp3lame", null),  ["wav"]  = ("pcm_s16le", null),
+            ["flac"] = ("flac",       null),  ["aac"]  = ("aac",       null),
+            ["ogg"]  = ("libvorbis",  null),  ["opus"] = ("libopus",   null),
+            ["m4a"]  = ("aac",        null),  ["wma"]  = ("wmav2",     null),
+            ["aiff"] = ("pcm_s16be",  null),  ["ac3"]  = ("ac3",       null),
+            ["mp4"]  = ("aac",        "libx264"),  ["mkv"]  = ("aac",       "libx264"),
+            ["avi"]  = ("libmp3lame", "mpeg4"),     ["mov"]  = ("aac",       "libx264"),
+            ["webm"] = ("libvorbis",  "libvpx-vp9"),["ogv"]  = ("libvorbis", "libtheora"),
+            ["wmv"]  = ("wmav2",      "wmv2"),      ["flv"]  = ("aac",       "libx264"),
+            ["m4v"]  = ("aac",        "libx264"),  ["ts"]   = ("aac",       "libx264"),
+            ["3gp"]  = ("aac",        "libx264"),
+        };
+
+        private static readonly HashSet<string> NoBitrateCodecs = new() { "pcm_s16le", "pcm_s16be", "flac" };
+        private static readonly HashSet<string> VideoExts = new(VideoFormats.Select(f => "." + f), StringComparer.OrdinalIgnoreCase);
+        private static readonly HashSet<string> AllInputExts = new(
+            AudioFormats.Concat(VideoFormats).Select(f => "." + f), StringComparer.OrdinalIgnoreCase);
 
         public VideoLabPage(WatermarkService watermarkService)
         {
@@ -339,6 +375,384 @@ namespace GeminiWatermarkRemover.Views
                 mask[i] = pixels[i * 4 + 3]; // alpha channel
 
             return mask;
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        // CONVERTER MODE
+        // ════════════════════════════════════════════════════════════════
+
+        private void RetouchMode_Checked(object sender, RoutedEventArgs e)
+        {
+            if (ConvertModeBtn == null || RetouchPanel == null) return;
+            ConvertModeBtn.IsChecked = false;
+            RetouchPanel.Visibility = Visibility.Visible;
+            ConvertPanel.Visibility = Visibility.Collapsed;
+            LoadVideoBtn.Content = "LOAD VIDEO";
+            LoadVideoBtn.Visibility = Visibility.Visible;
+            VideoInfoText.Text = _videoPath != null ? $"{Path.GetFileName(_videoPath)}" : "AWAITING VIDEO INPUT...";
+        }
+
+        private void ConvertMode_Checked(object sender, RoutedEventArgs e)
+        {
+            if (RetouchModeBtn == null || ConvertPanel == null) return;
+            RetouchModeBtn.IsChecked = false;
+            RetouchPanel.Visibility = Visibility.Collapsed;
+            ConvertPanel.Visibility = Visibility.Visible;
+            LoadVideoBtn.Visibility = Visibility.Collapsed;
+            VideoInfoText.Text = $"{_convertFiles.Count} file(s) queued.";
+        }
+
+        // ── Type mode change (Audio / Video) ────────────────────────────
+        private void TypeMode_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (OutputFormatCombo == null) return;
+            OutputFormatCombo.Items.Clear();
+
+            bool isVideo = TypeModeCombo.SelectedIndex == 1;
+            var formats = isVideo ? VideoFormats : AudioFormats;
+            foreach (var f in formats)
+            {
+                var item = new ComboBoxItem
+                {
+                    Content = f,
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0A1520")),
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00E5FF"))
+                };
+                OutputFormatCombo.Items.Add(item);
+            }
+            OutputFormatCombo.SelectedIndex = 0;
+
+            if (AudioSettingsPanel != null && VideoSettingsPanel != null)
+            {
+                AudioSettingsPanel.Visibility = isVideo ? Visibility.Collapsed : Visibility.Visible;
+                VideoSettingsPanel.Visibility = isVideo ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        // ── File management ──────────────────────────────────────────────
+        private void AddFiles_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new OpenFileDialog
+            {
+                Filter = "All Media|" + string.Join(";", AllInputExts.Select(x => "*" + x)) +
+                         "|Audio|" + string.Join(";", AudioFormats.Select(f => "*." + f)) +
+                         "|Video|" + string.Join(";", VideoFormats.Select(f => "*." + f)) +
+                         "|All Files|*.*",
+                Multiselect = true,
+                Title = "Select audio/video files"
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            int added = 0;
+            foreach (var path in dlg.FileNames)
+                added += IngestFile(path);
+
+            if (string.IsNullOrWhiteSpace(OutputFolderBox.Text) && dlg.FileNames.Length > 0)
+                OutputFolderBox.Text = Path.GetDirectoryName(dlg.FileNames[0]) ?? "";
+
+            UpdateFileCount();
+            ConvertStatusText.Text = $"{added} file(s) added — {_convertFiles.Count} queued.";
+        }
+
+        private void AddFolder_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new System.Windows.Forms.FolderBrowserDialog { Description = "Select folder" };
+            if (dlg.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+
+            string folder = dlg.SelectedPath;
+            if (string.IsNullOrWhiteSpace(OutputFolderBox.Text))
+                OutputFolderBox.Text = Directory.GetParent(folder)?.FullName ?? folder;
+
+            ConvertStatusText.Text = "Scanning folder...";
+            Task.Run(() =>
+            {
+                var files = ScanFolder(folder);
+                Dispatcher.Invoke(() =>
+                {
+                    int added = 0;
+                    foreach (var f in files) added += IngestFile(f);
+                    UpdateFileCount();
+                    ConvertStatusText.Text = files.Count == 0
+                        ? "No supported files found."
+                        : $"{added} file(s) added — {_convertFiles.Count} queued.";
+                });
+            });
+        }
+
+        private void RemoveSelected_Click(object sender, RoutedEventArgs e)
+        {
+            var selected = ConvertFileList.SelectedItems.Cast<object>().ToList();
+            if (selected.Count == 0) return;
+
+            foreach (var item in selected)
+            {
+                int idx = ConvertFileList.Items.IndexOf(item);
+                if (idx >= 0 && idx < _convertFiles.Count)
+                {
+                    _convertFilesSet.Remove(_convertFiles[idx]);
+                    _convertFiles.RemoveAt(idx);
+                    ConvertFileList.Items.RemoveAt(idx);
+                }
+            }
+            UpdateFileCount();
+        }
+
+        private void ClearFiles_Click(object sender, RoutedEventArgs e)
+        {
+            _convertFiles.Clear();
+            _convertFilesSet.Clear();
+            ConvertFileList.Items.Clear();
+            UpdateFileCount();
+            ConvertProgressBar.Value = 0;
+            ConvertStatusText.Text = "Ready — add files to begin.";
+        }
+
+        private int IngestFile(string path)
+        {
+            if (_convertFilesSet.Contains(path)) return 0;
+            string ext = Path.GetExtension(path).ToLowerInvariant();
+            if (!AllInputExts.Contains(ext)) return 0;
+
+            string icon = VideoExts.Contains(ext) ? "🎬" : "🎵";
+            _convertFilesSet.Add(path);
+            _convertFiles.Add(path);
+            ConvertFileList.Items.Add($"{icon}  {Path.GetFileName(path)}");
+            return 1;
+        }
+
+        private void UpdateFileCount()
+        {
+            int audio = _convertFiles.Count(p => !VideoExts.Contains(Path.GetExtension(p).ToLowerInvariant()));
+            int video = _convertFiles.Count - audio;
+            var parts = new List<string>();
+            if (audio > 0) parts.Add($"{audio} audio");
+            if (video > 0) parts.Add($"{video} video");
+            FileCountText.Text = parts.Count > 0 ? string.Join(" · ", parts) : "";
+            VideoInfoText.Text = $"{_convertFiles.Count} file(s) queued.";
+        }
+
+        private List<string> ScanFolder(string folder)
+        {
+            var found = new List<string>();
+            try
+            {
+                foreach (var file in Directory.EnumerateFiles(folder, "*.*", SearchOption.AllDirectories))
+                {
+                    if (AllInputExts.Contains(Path.GetExtension(file).ToLowerInvariant()))
+                        found.Add(file);
+                }
+            }
+            catch { /* permission errors etc */ }
+            return found;
+        }
+
+        private void BrowseOutput_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new System.Windows.Forms.FolderBrowserDialog { Description = "Select output folder" };
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                OutputFolderBox.Text = dlg.SelectedPath;
+        }
+
+        // ── FFmpeg command builder ───────────────────────────────────────
+        private string GetComboValue(ComboBox combo)
+        {
+            return (combo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
+        }
+
+        private List<string> BuildFfmpegCmd(string src, string dst, string outFmt, Dictionary<string, string> settings)
+        {
+            var (acodec, vcodec) = CodecMap.GetValueOrDefault(outFmt, ("aac", null));
+            bool srcIsVideo = VideoExts.Contains(Path.GetExtension(src).ToLowerInvariant());
+            bool dstIsVideo = vcodec != null;
+
+            var cmd = new List<string> { "ffmpeg", "-y", "-i", src };
+
+            if (dstIsVideo && srcIsVideo)
+            {
+                // Video → Video
+                cmd.AddRange(new[] { "-c:v", vcodec! });
+
+                string res = settings.GetValueOrDefault("resolution", "Original");
+                if (res != "Original" && res.Contains(':'))
+                {
+                    string wh = res.Split(' ')[0];
+                    cmd.AddRange(new[] { "-vf",
+                        $"scale={wh}:force_original_aspect_ratio=decrease," +
+                        $"pad={wh}:(ow-iw)/2:(oh-ih)/2," +
+                        $"scale=trunc(ow/2)*2:trunc(oh/2)*2" });
+                }
+
+                string quality = settings.GetValueOrDefault("quality", "Medium (CRF 23)");
+                string crf = quality switch
+                {
+                    "High (CRF 18)" => "18", "Low (CRF 28)" => "28",
+                    "Very Low (CRF 35)" => "35", _ => "23"
+                };
+
+                if (vcodec is "libx264" or "libx265")
+                    cmd.AddRange(new[] { "-crf", crf, "-preset", "medium" });
+                else if (vcodec == "libvpx-vp9")
+                    cmd.AddRange(new[] { "-crf", crf, "-b:v", "0" });
+                else if (vcodec == "libtheora")
+                {
+                    string tq = crf switch { "18" => "10", "23" => "7", "28" => "4", _ => "1" };
+                    cmd.AddRange(new[] { "-q:v", tq });
+                }
+                else if (vcodec is "wmv2" or "mpeg4")
+                {
+                    string qv = crf switch { "18" => "2", "23" => "6", "28" => "14", _ => "24" };
+                    cmd.AddRange(new[] { "-q:v", qv });
+                }
+
+                cmd.AddRange(new[] { "-c:a", acodec, "-b:a", settings.GetValueOrDefault("vid_audio_bitrate", "192k") });
+            }
+            else if (dstIsVideo && !srcIsVideo)
+            {
+                // Audio → Video container (audio-only)
+                cmd.AddRange(new[] { "-vn", "-c:a", acodec });
+                if (!NoBitrateCodecs.Contains(acodec))
+                    cmd.AddRange(new[] { "-b:a", settings.GetValueOrDefault("vid_audio_bitrate", "192k") });
+                cmd.AddRange(new[] { "-ar", settings.GetValueOrDefault("samplerate", "44100"), "-ac", settings.GetValueOrDefault("channels", "2") });
+            }
+            else
+            {
+                // Any → Audio
+                cmd.AddRange(new[] { "-vn", "-c:a", acodec });
+                if (!NoBitrateCodecs.Contains(acodec))
+                    cmd.AddRange(new[] { "-b:a", settings.GetValueOrDefault("audio_bitrate", "192k") });
+                string sr = settings.GetValueOrDefault("samplerate", "44100");
+                if (acodec == "libopus" && sr != "8000" && sr != "12000" && sr != "16000" && sr != "24000" && sr != "48000")
+                    sr = "48000";
+                cmd.AddRange(new[] { "-ar", sr, "-ac", settings.GetValueOrDefault("channels", "2") });
+            }
+
+            cmd.Add(dst);
+            return cmd;
+        }
+
+        // ── Batch conversion ─────────────────────────────────────────────
+        private async void ConvertAll_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isConverting) return;
+            if (_convertFiles.Count == 0)
+            {
+                DarkMessageBox.Show("Please add files first.", "No files", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            string outDir = OutputFolderBox.Text.Trim();
+            if (string.IsNullOrEmpty(outDir) || !Directory.Exists(outDir))
+            {
+                DarkMessageBox.Show("Please choose a valid output folder.", "No output folder",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            string outFmt = GetComboValue(OutputFormatCombo);
+            if (string.IsNullOrEmpty(outFmt)) return;
+
+            _isConverting = true;
+            ConvertAllBtn.IsEnabled = false;
+            ConvertProgressBar.Value = 0;
+
+            // Capture all UI values on the UI thread before background work
+            var settings = new Dictionary<string, string>
+            {
+                ["resolution"] = GetComboValue(ResolutionCombo),
+                ["quality"] = GetComboValue(QualityCombo),
+                ["vid_audio_bitrate"] = GetComboValue(VidAudioBitrateCombo),
+                ["audio_bitrate"] = GetComboValue(AudioBitrateCombo),
+                ["samplerate"] = GetComboValue(SampleRateCombo),
+                ["channels"] = GetComboValue(ChannelsCombo) == "Mono" ? "1" : "2",
+            };
+
+            int total = _convertFiles.Count;
+            int done = 0, ok = 0;
+            var filesToConvert = _convertFiles.ToList();
+
+            await Task.Run(() =>
+            {
+                foreach (var src in filesToConvert)
+                {
+                    string stem = Path.GetFileNameWithoutExtension(src);
+                    if (string.IsNullOrEmpty(stem)) stem = "_unnamed";
+                    string dst = Path.Combine(outDir, stem + "." + outFmt);
+                    int idx = 1;
+                    while (File.Exists(dst))
+                    {
+                        dst = Path.Combine(outDir, $"{stem}_{idx}.{outFmt}");
+                        idx++;
+                    }
+
+                    var cmd = BuildFfmpegCmd(src, dst, outFmt, settings);
+                    bool success = false;
+                    string msg = "";
+
+                    try
+                    {
+                        var psi = new ProcessStartInfo
+                        {
+                            FileName = cmd[0],
+                            Arguments = string.Join(" ", cmd.Skip(1).Select(a => a.Contains(' ') ? $"\"{a}\"" : a)),
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+                        using var proc = Process.Start(psi);
+                        if (proc != null)
+                        {
+                            string stderr = proc.StandardError.ReadToEnd();
+                            proc.WaitForExit();
+                            if (proc.ExitCode == 0)
+                            {
+                                success = true;
+                                msg = $"Saved: {Path.GetFileName(dst)}";
+                            }
+                            else
+                            {
+                                msg = $"Error: {BestError(stderr)}";
+                            }
+                        }
+                    }
+                    catch (System.ComponentModel.Win32Exception)
+                    {
+                        msg = "ffmpeg not found — install from ffmpeg.org";
+                    }
+                    catch (Exception ex)
+                    {
+                        msg = ex.Message;
+                    }
+
+                    done++;
+                    if (success) ok++;
+                    int d = done, o = ok;
+                    string m = msg;
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        ConvertProgressBar.Value = (double)d / total * 100;
+                        ConvertStatusText.Text = $"[{d}/{total}]  {m}";
+                    });
+                }
+            });
+
+            _isConverting = false;
+            ConvertAllBtn.IsEnabled = true;
+            ConvertStatusText.Text = ok == total
+                ? $"✔  Done! {ok}/{total} converted → {outDir}"
+                : $"⚠  Finished with errors: {ok}/{total} succeeded.";
+        }
+
+        private static string BestError(string stderr)
+        {
+            if (string.IsNullOrEmpty(stderr)) return "Unknown error";
+            var lines = stderr.Trim().Split('\n');
+            var priority = lines.Where(l =>
+                l.Contains("Error") || l.Contains("error") || l.Contains("Invalid") ||
+                l.Contains("not found") || l.Contains("failed") || l.Contains("Failed")).ToArray();
+            return priority.Length > 0
+                ? priority.Last().Trim()
+                : string.Join(" | ", lines.TakeLast(2).Select(l => l.Trim()).Where(l => l.Length > 0));
         }
     }
 }
