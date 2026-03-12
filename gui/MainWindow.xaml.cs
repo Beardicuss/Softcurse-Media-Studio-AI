@@ -11,7 +11,7 @@ namespace GeminiWatermarkRemover
     public partial class MainWindow : Window
     {
         private Views.ImageEditorPage? _imageEditorPage;
-        private Views.BatchProcessorPage? _batchPage;
+        private Views.ToolkitLabPage? _toolkitPage;
         private Views.VideoLabPage? _videoPage;
         private Views.GenerativeFillPage? _genFillPage;
         private Views.SpriteGeneratorPage? _spritePage;
@@ -54,7 +54,7 @@ namespace GeminiWatermarkRemover
             };
             IEFrame.BeginAnimation(OpacityProperty, iePulse);
 
-            // Mask Processor: outer ring rotation (3s), inner ring counter-rotation (2s)
+            // Toolkit Lab: outer ring rotation (3s), inner ring counter-rotation (2s)
             var mpOuterSpin = new DoubleAnimation(0, 360, TimeSpan.FromSeconds(3))
             {
                 RepeatBehavior = RepeatBehavior.Forever
@@ -129,9 +129,9 @@ namespace GeminiWatermarkRemover
                         ContentFrame.Navigate(_imageEditorPage);
                         break;
                     case "BatchPage":
-                        if (_batchPage == null)
-                            _batchPage = new Views.BatchProcessorPage(_sharedWatermarkService);
-                        ContentFrame.Navigate(_batchPage);
+                        if (_toolkitPage == null)
+                            _toolkitPage = new Views.ToolkitLabPage();
+                        ContentFrame.Navigate(_toolkitPage);
                         break;
                     case "VideoPage":
                         if (_videoPage == null)

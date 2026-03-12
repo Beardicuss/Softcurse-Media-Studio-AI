@@ -1,0 +1,621 @@
+<UserControl x:Class="GeminiWatermarkRemover.Views.ToolkitLabPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.modernwpf.com/2019"
+             Background="Transparent">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="170"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- LEFT: Tool Selector Sidebar                                 -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <Border Grid.Column="0" Background="{StaticResource PanelBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+            <StackPanel Margin="10,14,10,10">
+                <TextBlock Text="TOOLKIT LAB" FontSize="14" FontWeight="Bold"
+                           Foreground="{StaticResource CyberAccentBrush}"
+                           FontFamily="Segoe UI" Margin="4,0,0,4">
+                    <TextBlock.Effect>
+                        <DropShadowEffect Color="#00E5FF" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
+                    </TextBlock.Effect>
+                </TextBlock>
+                <TextBlock Text="Quick image utilities" FontSize="10"
+                           Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"
+                           Margin="4,0,0,12"/>
+                <Rectangle Height="1" Fill="{StaticResource BorderBrush}" Margin="0,0,0,10"/>
+
+                <ToggleButton x:Name="ToolResize" Content="✦  RESIZER" IsChecked="True"
+                              Height="32" Style="{StaticResource ToggleOutline}"
+                              FontSize="10" Margin="0,0,0,4" HorizontalContentAlignment="Left"
+                              Padding="10,0" Checked="ToolButton_Checked"/>
+                <ToggleButton x:Name="ToolConvert" Content="⇄  CONVERTER"
+                              Height="32" Style="{StaticResource ToggleOutline}"
+                              FontSize="10" Margin="0,0,0,4" HorizontalContentAlignment="Left"
+                              Padding="10,0" Checked="ToolButton_Checked"/>
+                <ToggleButton x:Name="ToolPalette" Content="◆  PALETTE"
+                              Height="32" Style="{StaticResource ToggleOutline}"
+                              FontSize="10" Margin="0,0,0,4" HorizontalContentAlignment="Left"
+                              Padding="10,0" Checked="ToolButton_Checked"/>
+                <ToggleButton x:Name="ToolMetadata" Content="✎  METADATA"
+                              Height="32" Style="{StaticResource ToggleOutline}"
+                              FontSize="10" Margin="0,0,0,4" HorizontalContentAlignment="Left"
+                              Padding="10,0" Checked="ToolButton_Checked"/>
+                <ToggleButton x:Name="ToolCompare" Content="◧  COMPARE"
+                              Height="32" Style="{StaticResource ToggleOutline}"
+                              FontSize="10" Margin="0,0,0,4" HorizontalContentAlignment="Left"
+                              Padding="10,0" Checked="ToolButton_Checked"/>
+                <ToggleButton x:Name="ToolCrop" Content="⬡  CROP"
+                              Height="32" Style="{StaticResource ToggleOutline}"
+                              FontSize="10" Margin="0,0,0,4" HorizontalContentAlignment="Left"
+                              Padding="10,0" Checked="ToolButton_Checked"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- RIGHT: Tool Content Panels                                  -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <Grid Grid.Column="1" Margin="16">
+
+            <!-- ─── RESIZER PANEL ─── -->
+            <Grid x:Name="ResizerPanel">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                    <TextBlock Text="IMAGE RESIZER" FontSize="13" FontWeight="Bold"
+                               Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI"/>
+                    <TextBlock Text="Resize images by dimensions, percentage, or social media presets"
+                               FontSize="10" Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"/>
+                </StackPanel>
+
+                <!-- Preview -->
+                <Border Grid.Row="1" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
+                        BorderThickness="1" Margin="0,0,0,10" ClipToBounds="True">
+                    <Grid>
+                        <StackPanel x:Name="ResizerEmpty" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="No image loaded" FontSize="14" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"/>
+                            <Button Content="BROWSE IMAGE" Height="30" Margin="0,10,0,0"
+                                    Style="{StaticResource BtnOutline}" Padding="14,0"
+                                    Click="ResizerBrowse_Click"/>
+                        </StackPanel>
+                        <Image x:Name="ResizerPreview" Stretch="Uniform" Margin="8"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Grid>
+                </Border>
+
+                <!-- Controls -->
+                <Border Grid.Row="2" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
+                        BorderThickness="1" Padding="14,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Dimensions -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,16,0">
+                            <StackPanel Margin="0,0,6,0">
+                                <TextBlock Text="WIDTH" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                           FontFamily="Segoe UI" Margin="0,0,0,2"/>
+                                <TextBox x:Name="ResizeWidth" Width="70" Height="26"
+                                         Style="{StaticResource HudTextBox}" TextChanged="ResizeDim_Changed"/>
+                            </StackPanel>
+                            <TextBlock Text="×" VerticalAlignment="Bottom" Margin="0,0,6,6"
+                                       FontSize="14" Foreground="{StaticResource TextDimBrush}"/>
+                            <StackPanel Margin="0,0,6,0">
+                                <TextBlock Text="HEIGHT" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                           FontFamily="Segoe UI" Margin="0,0,0,2"/>
+                                <TextBox x:Name="ResizeHeight" Width="70" Height="26"
+                                         Style="{StaticResource HudTextBox}" TextChanged="ResizeDim_Changed"/>
+                            </StackPanel>
+                            <CheckBox x:Name="LockAspect" Content="🔒" IsChecked="True"
+                                      VerticalAlignment="Bottom" Margin="0,0,0,4"
+                                      Foreground="{StaticResource CyberAccentBrush}"
+                                      ToolTip="Lock aspect ratio"/>
+                        </StackPanel>
+
+                        <!-- Percentage -->
+                        <StackPanel Grid.Column="1" Margin="0,0,16,0">
+                            <TextBlock Text="SCALE %" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                       FontFamily="Segoe UI" Margin="0,0,0,2"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Slider x:Name="ScaleSlider" Minimum="10" Maximum="400" Value="100" Width="100"
+                                        VerticalAlignment="Center"
+                                        Foreground="{StaticResource CyberAccentBrush}"
+                                        ValueChanged="ScaleSlider_Changed"/>
+                                <TextBlock x:Name="ScaleLabel" Text="100%" Width="40"
+                                           FontSize="11" FontFamily="Consolas" VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextBrush}" Margin="6,0,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Presets -->
+                        <StackPanel Grid.Column="2" Margin="0,0,16,0">
+                            <TextBlock Text="PRESETS" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                       FontFamily="Segoe UI" Margin="0,0,0,2"/>
+                            <ComboBox x:Name="PresetCombo" Width="160" Height="26"
+                                      Style="{StaticResource HudComboBox}"
+                                      SelectionChanged="Preset_Changed">
+                                <ComboBoxItem Content="Custom" IsSelected="True"/>
+                                <ComboBoxItem Content="Instagram (1080×1080)"/>
+                                <ComboBoxItem Content="Twitter (1200×675)"/>
+                                <ComboBoxItem Content="FB Cover (820×312)"/>
+                                <ComboBoxItem Content="YT Thumb (1280×720)"/>
+                                <ComboBoxItem Content="Icon 256 (256×256)"/>
+                                <ComboBoxItem Content="HD (1920×1080)"/>
+                                <ComboBoxItem Content="4K (3840×2160)"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Info -->
+                        <TextBlock x:Name="ResizerInfo" Grid.Column="3" Text=""
+                                   FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextDimBrush}"/>
+
+                        <!-- Action -->
+                        <Button Grid.Column="4" Content="RESIZE &amp; SAVE" Height="32"
+                                Style="{StaticResource BtnPrimary}" Padding="16,0"
+                                Click="ResizeSave_Click"/>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ─── CONVERTER PANEL ─── -->
+            <Grid x:Name="ConverterPanel" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                    <TextBlock Text="FORMAT CONVERTER" FontSize="13" FontWeight="Bold"
+                               Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI"/>
+                    <TextBlock Text="Convert images between formats — PNG, JPG, BMP, WebP, TIFF, GIF, ICO"
+                               FontSize="10" Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"/>
+                </StackPanel>
+
+                <!-- Drop zone + file list -->
+                <Border Grid.Row="1" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
+                        BorderThickness="1" Margin="0,0,0,10"
+                        AllowDrop="True" Drop="ConverterDrop_Drop" DragOver="ConverterDrop_DragOver">
+                    <Grid>
+                        <StackPanel x:Name="ConverterEmpty" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="⊕" FontSize="40" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource BorderBrightBrush}"/>
+                            <TextBlock Text="Drag &amp; drop images here" FontSize="14" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,4,0,0"/>
+                            <TextBlock Text="or" FontSize="10" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,4,0,0"/>
+                            <Button Content="BROWSE FILES" Height="30" Margin="0,8,0,0"
+                                    Style="{StaticResource BtnOutline}" Padding="14,0"
+                                    Click="ConverterBrowse_Click"/>
+                        </StackPanel>
+                        <ListBox x:Name="ConvertFileList" Background="Transparent"
+                                 Foreground="{StaticResource TextBrush}"
+                                 FontFamily="Consolas" FontSize="11" BorderThickness="0"
+                                 Visibility="Collapsed" SelectionMode="Extended"/>
+                    </Grid>
+                </Border>
+
+                <!-- Controls -->
+                <Border Grid.Row="2" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
+                        BorderThickness="1" Padding="14,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Output format -->
+                        <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                            <TextBlock Text="OUTPUT FORMAT" FontSize="9" FontWeight="Bold"
+                                       Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI"
+                                       Margin="0,0,0,2"/>
+                            <ComboBox x:Name="ImgFormatCombo" Width="100" Height="26"
+                                      Style="{StaticResource HudComboBox}" SelectedIndex="0"
+                                      SelectionChanged="ImgFormat_Changed">
+                                <ComboBoxItem Content="PNG"/>
+                                <ComboBoxItem Content="JPG"/>
+                                <ComboBoxItem Content="BMP"/>
+                                <ComboBoxItem Content="WebP"/>
+                                <ComboBoxItem Content="TIFF"/>
+                                <ComboBoxItem Content="GIF"/>
+                                <ComboBoxItem Content="ICO"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Quality (for lossy) -->
+                        <StackPanel x:Name="QualityPanel" Grid.Column="1" Margin="0,0,16,0" Visibility="Collapsed">
+                            <TextBlock Text="QUALITY" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                       FontFamily="Segoe UI" Margin="0,0,0,2"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Slider x:Name="ImgQualitySlider" Minimum="10" Maximum="100" Value="90" Width="100"
+                                        VerticalAlignment="Center"
+                                        Foreground="{StaticResource CyberAccentBrush}"
+                                        ValueChanged="ImgQuality_Changed"/>
+                                <TextBlock x:Name="ImgQualityLabel" Text="90%" Width="36"
+                                           FontSize="11" FontFamily="Consolas" VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextBrush}" Margin="4,0,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- File count -->
+                        <TextBlock x:Name="ConvertFileCount" Grid.Column="2" Text=""
+                                   FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextDimBrush}" Margin="0,0,16,0"/>
+
+                        <!-- Progress -->
+                        <ProgressBar x:Name="ImgConvertProgress" Grid.Column="3" Height="6"
+                                     Minimum="0" Maximum="100" Value="0" Margin="0,0,16,0"
+                                     Foreground="{StaticResource CyberAccentBrush}" Background="#0A1520"
+                                     VerticalAlignment="Center"/>
+
+                        <!-- Clear -->
+                        <Button Grid.Column="4" Content="CLEAR" Height="32" Margin="0,0,8,0"
+                                Style="{StaticResource BtnDanger}" Padding="12,0"
+                                Click="ConverterClear_Click"/>
+
+                        <!-- Convert -->
+                        <Button Grid.Column="5" Content="CONVERT ALL" Height="32"
+                                Style="{StaticResource BtnPrimary}" Padding="16,0"
+                                Click="ConvertAll_Click"/>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ─── PALETTE PANEL ─── -->
+            <Grid x:Name="PalettePanel" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                    <TextBlock Text="COLOR PALETTE EXTRACTOR" FontSize="13" FontWeight="Bold"
+                               Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI"/>
+                    <TextBlock Text="Extract dominant colors from any image — click a swatch to copy its hex code"
+                               FontSize="10" Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"/>
+                </StackPanel>
+
+                <!-- Preview + Palette -->
+                <Grid Grid.Row="1" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="220"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Image preview -->
+                    <Border Grid.Column="0" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
+                            BorderThickness="1" Margin="0,0,10,0" ClipToBounds="True">
+                        <Grid>
+                            <StackPanel x:Name="PaletteEmpty" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock Text="No image loaded" FontSize="14" HorizontalAlignment="Center"
+                                           Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"/>
+                                <Button Content="BROWSE IMAGE" Height="30" Margin="0,10,0,0"
+                                        Style="{StaticResource BtnOutline}" Padding="14,0"
+                                        Click="PaletteBrowse_Click"/>
+                            </StackPanel>
+                            <Image x:Name="PalettePreview" Stretch="Uniform" Margin="8"
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Color swatches -->
+                    <Border Grid.Column="1" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
+                            BorderThickness="1" Padding="12">
+                        <StackPanel>
+                            <TextBlock Text="DOMINANT COLORS" FontSize="10" FontWeight="Bold"
+                                       Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI"
+                                       Margin="0,0,0,8"/>
+                            <StackPanel x:Name="PaletteSwatches">
+                                <TextBlock Text="Load an image to extract colors"
+                                           FontSize="10" Foreground="{StaticResource TextDimBrush}"
+                                           FontFamily="Segoe UI" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Controls -->
+                <Border Grid.Row="2" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
+                        BorderThickness="1" Padding="14,10">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="COLORS:" FontSize="9" FontWeight="Bold" VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,0,8,0"/>
+                        <ComboBox x:Name="PaletteCountCombo" Width="60" Height="26"
+                                  Style="{StaticResource HudComboBox}" SelectedIndex="2"
+                                  SelectionChanged="PaletteCount_Changed">
+                            <ComboBoxItem Content="4"/>
+                            <ComboBoxItem Content="6"/>
+                            <ComboBoxItem Content="8"/>
+                            <ComboBoxItem Content="10"/>
+                            <ComboBoxItem Content="12"/>
+                        </ComboBox>
+                        <Button Content="RE-EXTRACT" Height="30" Margin="12,0,0,0"
+                                Style="{StaticResource BtnOutline}" Padding="14,0"
+                                Click="PaletteExtract_Click"/>
+                        <Button Content="COPY ALL HEX" Height="30" Margin="8,0,0,0"
+                                Style="{StaticResource BtnOutline}" Padding="14,0"
+                                Click="PaletteCopyAll_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ─── METADATA PANEL ─── -->
+            <Grid x:Name="MetadataPanel" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                    <TextBlock Text="IMAGE METADATA VIEWER" FontSize="13" FontWeight="Bold"
+                               Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI"/>
+                    <TextBlock Text="View and edit image properties — dimensions, DPI, EXIF data"
+                               FontSize="10" Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"/>
+                </StackPanel>
+
+                <!-- Metadata grid -->
+                <Border Grid.Row="1" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
+                        BorderThickness="1" Margin="0,0,0,10">
+                    <Grid>
+                        <StackPanel x:Name="MetaEmpty" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="No image loaded" FontSize="14" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"/>
+                            <Button Content="BROWSE IMAGE" Height="30" Margin="0,10,0,0"
+                                    Style="{StaticResource BtnOutline}" Padding="14,0"
+                                    Click="MetaBrowse_Click"/>
+                        </StackPanel>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="8">
+                            <StackPanel x:Name="MetaProperties" Visibility="Collapsed">
+                                <!-- Dynamically populated -->
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+
+                <!-- Controls -->
+                <Border Grid.Row="2" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
+                        BorderThickness="1" Padding="14,10">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="SET DPI:" FontSize="9" FontWeight="Bold" VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,0,8,0"/>
+                        <TextBox x:Name="MetaDpiInput" Width="60" Height="26"
+                                 Style="{StaticResource HudTextBox}" Text="300"/>
+                        <Button Content="APPLY DPI" Height="30" Margin="8,0,0,0"
+                                Style="{StaticResource BtnOutline}" Padding="14,0"
+                                Click="MetaApplyDpi_Click"/>
+                        <Button Content="STRIP EXIF" Height="30" Margin="8,0,0,0"
+                                Style="{StaticResource BtnDanger}" Padding="14,0"
+                                Click="MetaStripExif_Click"/>
+                        <TextBlock x:Name="MetaStatusText" Text="" FontSize="10" VerticalAlignment="Center"
+                                   Foreground="{StaticResource CyberAccentBrush}" FontFamily="Consolas"
+                                   Margin="12,0,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ─── COMPARE PANEL ─── -->
+            <Grid x:Name="ComparePanel" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                    <TextBlock Text="IMAGE COMPARE" FontSize="13" FontWeight="Bold"
+                               Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI"/>
+                    <TextBlock Text="Slide to compare two images side by side — drag the divider or use the slider"
+                               FontSize="10" Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"/>
+                </StackPanel>
+
+                <!-- Compare canvas -->
+                <Border Grid.Row="1" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
+                        BorderThickness="1" Margin="0,0,0,10" ClipToBounds="True">
+                    <Grid x:Name="CompareContainer">
+                        <StackPanel x:Name="CompareEmpty" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="Load two images to compare" FontSize="14" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                                <Button Content="LOAD LEFT (BEFORE)" Height="30" Margin="0,0,8,0"
+                                        Style="{StaticResource BtnOutline}" Padding="14,0"
+                                        Click="CompareLoadLeft_Click"/>
+                                <Button Content="LOAD RIGHT (AFTER)" Height="30"
+                                        Style="{StaticResource BtnOutline}" Padding="14,0"
+                                        Click="CompareLoadRight_Click"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Right image (full, behind) -->
+                        <Image x:Name="CompareRight" Stretch="Uniform" Visibility="Collapsed"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                        <!-- Left image (clipped) -->
+                        <Image x:Name="CompareLeft" Stretch="Uniform" Visibility="Collapsed"
+                               RenderOptions.BitmapScalingMode="HighQuality">
+                            <Image.Clip>
+                                <RectangleGeometry x:Name="CompareClip" Rect="0,0,400,2000"/>
+                            </Image.Clip>
+                        </Image>
+
+                        <!-- Divider line -->
+                        <Canvas x:Name="CompareDividerCanvas" Visibility="Collapsed">
+                            <Line x:Name="CompareDividerLine" Y1="0" Y2="2000"
+                                  Stroke="{StaticResource CyberAccentBrush}" StrokeThickness="2"
+                                  Cursor="SizeWE"
+                                  MouseLeftButtonDown="CompareDivider_MouseDown"
+                                  MouseMove="CompareDivider_MouseMove"
+                                  MouseLeftButtonUp="CompareDivider_MouseUp"/>
+                            <!-- Drag handle -->
+                            <Border x:Name="CompareDividerHandle" Canvas.Top="0" Width="30" Height="30"
+                                    Background="{StaticResource CyberAccentBrush}" CornerRadius="15"
+                                    Cursor="SizeWE"
+                                    MouseLeftButtonDown="CompareDivider_MouseDown"
+                                    MouseMove="CompareDivider_MouseMove"
+                                    MouseLeftButtonUp="CompareDivider_MouseUp">
+                                <TextBlock Text="◂▸" FontSize="12" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" Foreground="#071018" FontWeight="Bold"/>
+                            </Border>
+                        </Canvas>
+                    </Grid>
+                </Border>
+
+                <!-- Controls -->
+                <Border Grid.Row="2" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
+                        BorderThickness="1" Padding="14,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0" Content="LOAD LEFT" Height="30" Margin="0,0,8,0"
+                                Style="{StaticResource BtnOutline}" Padding="12,0"
+                                Click="CompareLoadLeft_Click"/>
+                        <Button Grid.Column="1" Content="LOAD RIGHT" Height="30" Margin="0,0,16,0"
+                                Style="{StaticResource BtnOutline}" Padding="12,0"
+                                Click="CompareLoadRight_Click"/>
+
+                        <Slider x:Name="CompareSlider" Grid.Column="2" Minimum="0" Maximum="100" Value="50"
+                                VerticalAlignment="Center" Margin="0,0,16,0"
+                                Foreground="{StaticResource CyberAccentBrush}"
+                                ValueChanged="CompareSlider_Changed"/>
+
+                        <TextBlock x:Name="CompareInfo" Grid.Column="3" Text=""
+                                   FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextDimBrush}" Margin="0,0,12,0"/>
+
+                        <Button Grid.Column="4" Content="SWAP" Height="30"
+                                Style="{StaticResource BtnOutline}" Padding="12,0"
+                                Click="CompareSwap_Click"/>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ─── CROP PANEL ─── -->
+            <Grid x:Name="CropPanel" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                    <TextBlock Text="CROP TOOL" FontSize="13" FontWeight="Bold"
+                               Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI"/>
+                    <TextBlock Text="Draw a crop region on your image — drag corners to resize, drag center to move"
+                               FontSize="10" Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"/>
+                </StackPanel>
+
+                <!-- Crop canvas -->
+                <Border Grid.Row="1" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
+                        BorderThickness="1" Margin="0,0,0,10" ClipToBounds="True">
+                    <Grid x:Name="CropContainer">
+                        <StackPanel x:Name="CropEmpty" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="No image loaded" FontSize="14" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"/>
+                            <Button Content="BROWSE IMAGE" Height="30" Margin="0,10,0,0"
+                                    Style="{StaticResource BtnOutline}" Padding="14,0"
+                                    Click="CropBrowse_Click"/>
+                        </StackPanel>
+
+                        <Image x:Name="CropPreview" Stretch="Uniform" Margin="0"
+                               RenderOptions.BitmapScalingMode="HighQuality" Visibility="Collapsed"/>
+
+                        <!-- Overlay canvas for crop rectangle -->
+                        <Canvas x:Name="CropCanvas" Background="Transparent" Visibility="Collapsed"
+                                MouseLeftButtonDown="CropCanvas_MouseDown"
+                                MouseMove="CropCanvas_MouseMove"
+                                MouseLeftButtonUp="CropCanvas_MouseUp">
+                            <!-- Dark overlay (4 rects around crop area) -->
+                            <Rectangle x:Name="CropOverlayTop" Fill="#80000000"/>
+                            <Rectangle x:Name="CropOverlayBottom" Fill="#80000000"/>
+                            <Rectangle x:Name="CropOverlayLeft" Fill="#80000000"/>
+                            <Rectangle x:Name="CropOverlayRight" Fill="#80000000"/>
+                            <!-- Crop border -->
+                            <Rectangle x:Name="CropRect" Stroke="{StaticResource CyberAccentBrush}"
+                                       StrokeThickness="2" StrokeDashArray="4 2" Fill="Transparent"
+                                       Cursor="SizeAll"/>
+                            <!-- Corner handles -->
+                            <Ellipse x:Name="CropHandleTL" Width="10" Height="10" Cursor="SizeNWSE"
+                                     Fill="{StaticResource CyberAccentBrush}"/>
+                            <Ellipse x:Name="CropHandleTR" Width="10" Height="10" Cursor="SizeNESW"
+                                     Fill="{StaticResource CyberAccentBrush}"/>
+                            <Ellipse x:Name="CropHandleBL" Width="10" Height="10" Cursor="SizeNESW"
+                                     Fill="{StaticResource CyberAccentBrush}"/>
+                            <Ellipse x:Name="CropHandleBR" Width="10" Height="10" Cursor="SizeNWSE"
+                                     Fill="{StaticResource CyberAccentBrush}"/>
+                        </Canvas>
+                    </Grid>
+                </Border>
+
+                <!-- Controls -->
+                <Border Grid.Row="2" Background="#071018" BorderBrush="{StaticResource BorderBrightBrush}"
+                        BorderThickness="1" Padding="14,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                            <TextBlock Text="ASPECT RATIO" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                                       FontFamily="Segoe UI" Margin="0,0,0,2"/>
+                            <ComboBox x:Name="CropAspectCombo" Width="120" Height="26"
+                                      Style="{StaticResource HudComboBox}" SelectedIndex="0"
+                                      SelectionChanged="CropAspect_Changed">
+                                <ComboBoxItem Content="Free"/>
+                                <ComboBoxItem Content="1:1"/>
+                                <ComboBoxItem Content="4:3"/>
+                                <ComboBoxItem Content="3:4"/>
+                                <ComboBoxItem Content="16:9"/>
+                                <ComboBoxItem Content="9:16"/>
+                                <ComboBoxItem Content="3:2"/>
+                                <ComboBoxItem Content="2:3"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <TextBlock x:Name="CropInfo" Grid.Column="1" Text="" VerticalAlignment="Center"
+                                   FontSize="10" FontFamily="Consolas" Margin="0,0,16,0"
+                                   Foreground="{StaticResource TextDimBrush}"/>
+
+                        <Button Grid.Column="3" Content="CROP &amp; SAVE" Height="32"
+                                Style="{StaticResource BtnPrimary}" Padding="16,0"
+                                Click="CropSave_Click"/>
+                    </Grid>
+                </Border>
+            </Grid>
+
+        </Grid>
+    </Grid>
+</UserControl>

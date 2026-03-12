@@ -223,7 +223,7 @@
                                             <Ellipse Canvas.Left="8.5" Canvas.Top="21" Width="3" Height="3" Fill="#C8973A"/>
                                         </Canvas>
                                     </Viewbox>
-                                    <TextBlock Text="MASK PROCESSOR" FontSize="10" FontWeight="Bold"
+                                    <TextBlock Text="TOOLKIT LAB" FontSize="10" FontWeight="Bold"
                                                HorizontalAlignment="Center"
                                                FontFamily="Segoe UI"/>
                                 </StackPanel>
