@@ -1,4 +1,4 @@
-<Window x:Class="GeminiWatermarkRemover.MainWindow"
+<Window x:Class="SoftcurseMediaLabAI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.modernwpf.com/2019"
@@ -184,7 +184,7 @@
                             </Button>
 
                             <!-- MASK PROCESSOR — from softcurse-icons.html: rings + crosshair + dots -->
-                            <Button x:Name="NavBatch" Tag="BatchPage"
+                            <Button x:Name="NavBatch" Tag="ToolkitPage"
                                     Style="{StaticResource NavItemStyle}"
                                     Click="NavButton_Click">
                                 <StackPanel HorizontalAlignment="Center">

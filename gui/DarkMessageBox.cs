@@ -3,7 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 
-namespace GeminiWatermarkRemover
+namespace SoftcurseMediaLabAI
 {
     /// <summary>
     /// Dark-themed MessageBox replacement matching the HUD cyberpunk theme.

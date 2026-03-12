@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace GeminiWatermarkRemover
+namespace SoftcurseMediaLabAI
 {
     /// <summary>
     /// F-03 fix: Central, config-driven model path resolution.

@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace GeminiWatermarkRemover
+namespace SoftcurseMediaLabAI
 {
     public class WatermarkService : IDisposable
     {

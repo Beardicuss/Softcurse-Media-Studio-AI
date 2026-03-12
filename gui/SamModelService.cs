@@ -6,7 +6,7 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using System.Diagnostics;
 
-namespace GeminiWatermarkRemover
+namespace SoftcurseMediaLabAI
 {
     // ── F-02: Feature honestly renamed; stub removed; GrabCut clearly labelled ──
     // ── F-03: Model paths resolved via ModelPathResolver                         ──

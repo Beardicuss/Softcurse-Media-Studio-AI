@@ -6,7 +6,7 @@ using System.Windows.Media.Animation;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 
-namespace GeminiWatermarkRemover
+namespace SoftcurseMediaLabAI
 {
     public partial class MainWindow : Window
     {
@@ -128,7 +128,7 @@ namespace GeminiWatermarkRemover
                             _imageEditorPage = new Views.ImageEditorPage(_sharedWatermarkService, _sharedSamService);
                         ContentFrame.Navigate(_imageEditorPage);
                         break;
-                    case "BatchPage":
+                    case "ToolkitPage":
                         if (_toolkitPage == null)
                             _toolkitPage = new Views.ToolkitLabPage();
                         ContentFrame.Navigate(_toolkitPage);

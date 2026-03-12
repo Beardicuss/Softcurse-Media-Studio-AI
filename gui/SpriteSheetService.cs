@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using OpenCvSharp;
 
-namespace GeminiWatermarkRemover
+namespace SoftcurseMediaLabAI
 {
     /// <summary>
     /// Sprite sheet assembly, GIF encoding, and background removal utilities.

@@ -1,3 +1,5 @@
+# Softcurse Media Lab AI — Dependencies
+
 # Prerequisites
 .NET 8.0 SDK or Runtime (Windows 10/11 64-bit)
 
@@ -14,6 +16,10 @@ DirectML — Built-in, works with any GPU on Windows 10+. No extra install neede
 CUDA — Requires NVIDIA GPU with drivers. Drivers are GPU-vendor supplied, not bundled.
 CPU — Always available as fallback.
 
+# External Tools
+FFmpeg — Required for Forge Lab audio/video conversion and video retouch audio remuxing.
+  Must be available on PATH or installed separately.
+
 # External API Requirements (For Generative AI Features)
 Stable Diffusion WebUI (AUTOMATIC1111 or similar) running locally or remotely with the `--api` flag enabled.
 Default expected endpoint: http://127.0.0.1:7860/
@@ -23,4 +29,6 @@ Download: https://github.com/AUTOMATIC1111/stable-diffusion-webui/releases
 # External Models
 - LaMa ONNX Model: Place in models/lama_fp32.onnx (next to the application executable).
 - Segment Anything Model (SAM) ONNX: Encoder and Decoder models placed in models/ directory.
+  - sam_vit_b_01ec64.quant.onnx (encoder)
+  - sam_vit_b_01ec64.decoder.quant.onnx (decoder)
 - Custom model directory can be set in Settings → Model Directory.

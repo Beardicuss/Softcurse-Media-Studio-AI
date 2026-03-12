@@ -17,7 +17,7 @@ using System.Windows.Media.Effects;
 using System.Windows.Controls;
 using System.Threading.Tasks;
 
-namespace GeminiWatermarkRemover.Views
+namespace SoftcurseMediaLabAI.Views
 {
     public partial class ImageEditorPage : UserControl
     {

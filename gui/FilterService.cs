@@ -1,7 +1,7 @@
 using System;
 using OpenCvSharp;
 
-namespace GeminiWatermarkRemover
+namespace SoftcurseMediaLabAI
 {
     /// <summary>
     /// Provides simple image filters using OpenCvSharp.

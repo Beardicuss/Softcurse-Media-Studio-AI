@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.IO;
 
-namespace GeminiWatermarkRemover
+namespace SoftcurseMediaLabAI
 {
     /// <summary>
     /// F-12 fix: Replace ConcurrentBag (O(n) Contains) with ConcurrentDictionary (O(1) lookup).

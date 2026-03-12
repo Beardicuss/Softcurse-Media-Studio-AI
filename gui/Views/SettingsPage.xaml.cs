@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
 
-namespace GeminiWatermarkRemover.Views
+namespace SoftcurseMediaLabAI.Views
 {
     public partial class SettingsPage : UserControl
     {

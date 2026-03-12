@@ -1,4 +1,4 @@
-<UserControl x:Class="GeminiWatermarkRemover.Views.ImageEditorPage"
+<UserControl x:Class="SoftcurseMediaLabAI.Views.ImageEditorPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.modernwpf.com/2019"
@@ -47,21 +47,21 @@
                 <!-- Center: Core action buttons -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
 
-                    <Button x:Name="BackgroundButton" Content="BACKGROUND" Height="30" Margin="0,0,6,0"
-                            Style="{StaticResource BtnOutline}" Padding="14,0"
-                            Click="RemoveBackground_Click" IsEnabled="False"/>
+                    <Button x:Name="BackgroundButton" Content="BG REMOVE" Height="30" Margin="0,0,6,0"
+                            Style="{StaticResource BtnOutline}" Padding="10,0"
+                            Click="RemoveBackground_Click" IsEnabled="False" ToolTip="Remove Background"/>
 
-                    <Button x:Name="RetouchButton" Content="APPLY MASK (RETOUCH)" Height="30" Margin="0,0,6,0"
-                            Style="{StaticResource BtnPrimary}" Padding="14,0"
-                            Click="RemoveWatermark_Click" IsEnabled="False"/>
+                    <Button x:Name="RetouchButton" Content="RETOUCH" Height="30" Margin="0,0,6,0"
+                            Style="{StaticResource BtnPrimary}" Padding="10,0"
+                            Click="RemoveWatermark_Click" IsEnabled="False" ToolTip="Apply Mask (Retouch)"/>
 
                     <Button x:Name="ExpandButton" Content="EXPAND" Height="30" Margin="0,0,6,0"
-                            Style="{StaticResource BtnOutline}" Padding="14,0"
-                            Click="Expand_Click" IsEnabled="False"/>
+                            Style="{StaticResource BtnOutline}" Padding="10,0"
+                            Click="Expand_Click" IsEnabled="False" ToolTip="Expand Canvas"/>
 
                     <Button x:Name="UpscaleButton" Content="UPSCALE" Height="30" Margin="0,0,6,0"
-                            Style="{StaticResource BtnOutline}" Padding="14,0"
-                            Click="Upscale_Click" IsEnabled="False"/>
+                            Style="{StaticResource BtnOutline}" Padding="10,0"
+                            Click="Upscale_Click" IsEnabled="False" ToolTip="AI Upscale"/>
 
                     <Rectangle Width="1" Height="20" Fill="{StaticResource BorderBrush}" Margin="0,0,6,0"/>
 

@@ -12,7 +12,7 @@ using Microsoft.Win32;
 using OpenCvSharp;
 using WpfRectangle = System.Windows.Shapes.Rectangle;
 
-namespace GeminiWatermarkRemover.Views
+namespace SoftcurseMediaLabAI.Views
 {
     public partial class ToolkitLabPage : UserControl
     {

@@ -12,7 +12,7 @@ using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using OpenCvSharp;
 
-namespace GeminiWatermarkRemover.Views
+namespace SoftcurseMediaLabAI.Views
 {
     public partial class VideoLabPage : UserControl
     {

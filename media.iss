@@ -1,11 +1,11 @@
-; Inno Setup Script for Softcurse Media Studio AI
-; Updated: 2026-03-03 — v2.9 (glitch logo, model dir setting, SD WebUI download)
+; Inno Setup Script for Softcurse Media Lab AI
+; Updated: 2026-03-12 — v3.0 (Toolkit Lab, Forge Lab, namespace cleanup, multi-size icon)
 
-#define MyAppName "Softcurse Media Studio AI"
-#define MyAppVersion "2.9"
+#define MyAppName "Softcurse Media Lab AI"
+#define MyAppVersion "3.0"
 #define MyAppPublisher "Softcurse"
 #define MyAppURL "https://github.com/Beardicuss/Softcurse-Media-Studio-AI"
-#define MyAppExeName "SoftcurseMediaStudioAI.exe"
+#define MyAppExeName "SoftcurseMediaLabAI.exe"
 
 [Setup]
 AppId={{A4F7B9E2-3C1D-4E5A-8F6B-9D0E1F2A3B4C}
@@ -21,7 +21,7 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 LicenseFile=
 OutputDir=installer
-OutputBaseFilename=SoftcurseMediaStudioAI_Setup_v{#MyAppVersion}
+OutputBaseFilename=SoftcurseMediaLabAI_Setup_v{#MyAppVersion}
 SetupIconFile=assets\media.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2/ultra64

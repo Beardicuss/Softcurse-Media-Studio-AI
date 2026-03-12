@@ -5,7 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 
-namespace GeminiWatermarkRemover
+namespace SoftcurseMediaLabAI
 {
     public partial class App : Application
     {

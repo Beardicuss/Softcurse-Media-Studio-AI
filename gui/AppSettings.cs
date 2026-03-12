@@ -3,7 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Diagnostics;
 
-namespace GeminiWatermarkRemover
+namespace SoftcurseMediaLabAI
 {
     public class AppSettingsConfig
     {
