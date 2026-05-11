@@ -1,4 +1,4 @@
-# Gemini Watermark Remover
+# Softcurse Media Studio AI
 
 ![Gemini Watermark Remover](assets/media.png)
 
