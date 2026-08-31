@@ -21,12 +21,23 @@ Invoke-Checked { dotnet list $appProject package --vulnerable --include-transiti
 Push-Location $workspace
 try {
     Invoke-Checked { git diff --check }
-    $leftovers = rg -n "SpriteGenerator|SpriteSheetService|SdWebUiManager" gui -g "!bin" -g "!obj"
-    if ($LASTEXITCODE -eq 0) {
-        throw "Removed sprite-generator references were found:`n$leftovers"
+    $ripgrep = Get-Command "rg" -ErrorAction SilentlyContinue
+    if ($ripgrep) {
+        $leftovers = & $ripgrep.Source -n "SpriteGenerator|SpriteSheetService|SdWebUiManager" gui -g "!bin" -g "!obj"
+        if ($LASTEXITCODE -notin @(0, 1)) {
+            throw "Repository search failed with exit code $LASTEXITCODE."
+        }
+    } else {
+        $leftovers = Get-ChildItem -LiteralPath (Join-Path $workspace "gui") -Recurse -File |
+            Where-Object {
+                $_.FullName -notmatch '[\\/](bin|obj)[\\/]' -and
+                $_.Extension -in @(".cs", ".xaml", ".csproj", ".json")
+            } |
+            Select-String -Pattern "SpriteGenerator|SpriteSheetService|SdWebUiManager" |
+            ForEach-Object { "$($_.Path):$($_.LineNumber):$($_.Line.Trim())" }
     }
-    if ($LASTEXITCODE -ne 1) {
-        throw "Repository search failed with exit code $LASTEXITCODE."
+    if ($leftovers) {
+        throw "Removed sprite-generator references were found:`n$leftovers"
     }
 }
 finally {
