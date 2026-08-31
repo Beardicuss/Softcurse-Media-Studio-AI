@@ -1,17 +1,27 @@
 ; Inno Setup Script for Softcurse Media Lab AI
-; Updated: 2026-03-12 — v3.0 (Toolkit Lab, Forge Lab, namespace cleanup, multi-size icon)
+; Version is overridden by scripts/release.ps1 for reproducible releases.
 
 #define MyAppName "Softcurse Media Lab AI"
-#define MyAppVersion "3.0"
+#ifndef MyAppVersion
+  #define MyAppVersion "1.0.0"
+#endif
 #define MyAppPublisher "Softcurse"
 #define MyAppURL "https://github.com/Beardicuss/Softcurse-Media-Studio-AI"
 #define MyAppExeName "SoftcurseMediaLabAI.exe"
+#ifndef MyPublishDir
+  #define MyPublishDir "publish"
+#endif
 
 [Setup]
 AppId={{A4F7B9E2-3C1D-4E5A-8F6B-9D0E1F2A3B4C}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
+VersionInfoVersion={#MyAppVersion}.0
+VersionInfoCompany={#MyAppPublisher}
+VersionInfoDescription={#MyAppName}
+VersionInfoProductName={#MyAppName}
+VersionInfoProductVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
@@ -29,8 +39,13 @@ SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=lowest
 ArchitecturesInstallIn64BitMode=x64compatible
+ArchitecturesAllowed=x64compatible
 DisableProgramGroupPage=yes
 MinVersion=10.0
+SetupLogging=yes
+CloseApplications=yes
+RestartApplications=no
+UsePreviousAppDir=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -40,11 +55,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; Main application binaries and dependencies
-Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.pdb,*.lib,*.obj"
-
-; ONNX models and configs (shipped with installer if present)
-Source: "gui\models\*.onnx"; DestDir: "{app}\models"; Flags: ignoreversion skipifsourcedoesntexist
-Source: "gui\models\*.yaml"; DestDir: "{app}\models"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "{#MyPublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.pdb,*.lib,*.obj"
 
 ; Application icon
 Source: "assets\media.ico"; DestDir: "{app}"; Flags: ignoreversion

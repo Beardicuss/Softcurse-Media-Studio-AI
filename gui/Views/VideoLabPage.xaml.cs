@@ -14,7 +14,7 @@ using OpenCvSharp;
 
 namespace SoftcurseMediaLabAI.Views
 {
-    public partial class VideoLabPage : UserControl
+    public partial class VideoLabPage : UserControl, IDisposable
     {
         private readonly WatermarkService _watermarkService;
         private string? _videoPath;
@@ -24,6 +24,7 @@ namespace SoftcurseMediaLabAI.Views
         private double _fps;
         private int    _totalFrames;
         private CancellationTokenSource? _cancellationTokenSource;
+        private Process? _activeFfmpegProcess;
 
         // ── Converter state ─────────────────────────────────────────────
         private readonly List<string> _convertFiles = new();
@@ -64,6 +65,14 @@ namespace SoftcurseMediaLabAI.Views
             _watermarkService = watermarkService;
         }
 
+        public void Dispose()
+        {
+            _cancellationTokenSource?.Cancel();
+            FfmpegService.Terminate(_activeFfmpegProcess);
+            _firstFrameMat?.Dispose();
+            _firstFrameMat = null;
+        }
+
         private void SelectVideo_Click(object sender, RoutedEventArgs e)
         {
             var dlg = new OpenFileDialog
@@ -100,6 +109,7 @@ namespace SoftcurseMediaLabAI.Views
                     $"FPS: {Math.Round(_fps, 2)}  |  " +
                     $"Frames: {_totalFrames}";
 
+                _firstFrameMat?.Dispose();
                 _firstFrameMat = new Mat();
                 cap.Read(_firstFrameMat);
                 if (_firstFrameMat.Empty())
@@ -110,9 +120,8 @@ namespace SoftcurseMediaLabAI.Views
                 }
 
                 // Show preview via temp file (one-time, not per-frame)
-                string tempPreview = Path.Combine(Path.GetTempPath(), $"preview_{Guid.NewGuid()}.png");
+                string tempPreview = TempFileManager.CreateTempPath("preview", ".png");
                 Cv2.ImWrite(tempPreview, _firstFrameMat);
-                TempFileManager.RegisterTempFile(tempPreview);
 
                 var bmp = new BitmapImage();
                 bmp.BeginInit();
@@ -159,7 +168,8 @@ namespace SoftcurseMediaLabAI.Views
             {
                 Filter   = "MP4 Video (*.mp4)|*.mp4",
                 Title    = "Save Processed Video",
-                FileName = Path.GetFileNameWithoutExtension(_videoPath) + "_processed.mp4"
+                FileName = Path.GetFileNameWithoutExtension(_videoPath) + "_processed.mp4",
+                InitialDirectory = Directory.Exists(AppSettings.DefaultOutputFolder) ? AppSettings.DefaultOutputFolder : string.Empty
             };
             if (saveDialog.ShowDialog() != true) return;
 
@@ -173,8 +183,7 @@ namespace SoftcurseMediaLabAI.Views
             byte[]? maskBytes = ExtractMaskBytes();
 
             // Use intermediate file so we can remux audio afterwards
-            string tempVideoOut = Path.Combine(Path.GetTempPath(), $"vid_noaudio_{Guid.NewGuid()}.mp4");
-            TempFileManager.RegisterTempFile(tempVideoOut);
+            string tempVideoOut = TempFileManager.CreateTempPath("vid_noaudio", ".mp4");
 
             try
             {
@@ -194,7 +203,7 @@ namespace SoftcurseMediaLabAI.Views
             }
             catch (OperationCanceledException)
             {
-                VideoInfoText.Text = "Process cancelled.";
+                UiStatus.Set(VideoInfoText, "Process cancelled.", UiStatusKind.Warning);
             }
             finally
             {
@@ -209,8 +218,9 @@ namespace SoftcurseMediaLabAI.Views
         private void CancelProcess_Click(object sender, RoutedEventArgs e)
         {
             _cancellationTokenSource?.Cancel();
+            FfmpegService.Terminate(_activeFfmpegProcess);
             CancelProcessButton.IsEnabled = false;
-            VideoInfoText.Text = "CANCELLING...";
+            UiStatus.Set(VideoInfoText, "Cancelling and stopping active tools…", UiStatusKind.Working);
         }
 
         // ── F-05: In-memory frame pipeline — no per-frame PNG write/read ──
@@ -241,9 +251,18 @@ namespace SoftcurseMediaLabAI.Views
                 {
                     token.ThrowIfCancellationRequested();
 
-                    // F-05 fix: pass Mat directly — no temp file written per frame
-                    using Mat processed = _watermarkService.RemoveWatermarkFromMat(frame, maskBytes);
-                    writer.Write(processed);
+                    // Pass unchanged frames directly to the encoder. This avoids allocating and
+                    // copying a full-resolution Mat whenever the detector finds no watermark.
+                    Mat? processed = null;
+                    try
+                    {
+                        _watermarkService.TryRemoveWatermarkFromMat(frame, out processed, maskBytes);
+                        writer.Write(processed ?? frame);
+                    }
+                    finally
+                    {
+                        processed?.Dispose();
+                    }
 
                     currentFrame++;
                     if (currentFrame % 5 == 0 || currentFrame == _totalFrames)
@@ -284,21 +303,7 @@ namespace SoftcurseMediaLabAI.Views
         // ── F-13: FFmpeg availability check exposed as a public utility ──
         public static bool IsFfmpegAvailable()
         {
-            try
-            {
-                using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName               = "ffmpeg",
-                    Arguments              = "-version",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError  = true,
-                    UseShellExecute        = false,
-                    CreateNoWindow         = true
-                });
-                p?.WaitForExit(2000);
-                return p?.ExitCode == 0;
-            }
-            catch { return false; }
+            return FfmpegService.ProbeAsync().GetAwaiter().GetResult().Available;
         }
 
         private void RemuxAudio(
@@ -309,39 +314,43 @@ namespace SoftcurseMediaLabAI.Views
 
             try
             {
-                var psi = new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName               = "ffmpeg",
-                    Arguments              = $"-y -i \"{processedNoAudio}\" -i \"{originalVideo}\" " +
-                                             $"-c copy -map 0:v:0 -map 1:a:0? -shortest \"{finalOutput}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError  = true,
-                    UseShellExecute        = false,
-                    CreateNoWindow         = true
-                };
+                var psi = FfmpegService.CreateStartInfo();
+                foreach (string argument in new[] { "-y", "-i", processedNoAudio, "-i", originalVideo,
+                    "-c", "copy", "-map", "0:v:0", "-map", "1:a:0?", "-shortest", finalOutput })
+                    psi.ArgumentList.Add(argument);
 
                 using var process = System.Diagnostics.Process.Start(psi);
+                _activeFfmpegProcess = process;
                 if (process != null)
                 {
+                    Task<string> errorReadTask = process.StandardError.ReadToEndAsync();
                     while (!process.HasExited)
                     {
                         token.ThrowIfCancellationRequested();
                         Thread.Sleep(500);
                     }
+                    string ffmpegError = errorReadTask.GetAwaiter().GetResult();
                     if (process.ExitCode != 0 && !token.IsCancellationRequested)
+                    {
+                        Debug.WriteLine($"[FFmpeg] Audio remux failed: {BestError(ffmpegError)}");
                         File.Copy(processedNoAudio, finalOutput, true); // silent audio-less fallback
+                    }
                 }
             }
-            catch (OperationCanceledException) { throw; }
+            catch (OperationCanceledException)
+            {
+                FfmpegService.Terminate(_activeFfmpegProcess);
+                throw;
+            }
             catch (System.ComponentModel.Win32Exception)
             {
-                // F-13: explicit message; ffmpeg not in PATH
+                // F-13: explicit message when the packaged component is unavailable.
                 Application.Current.Dispatcher.Invoke(() =>
                     DarkMessageBox.Show(
-                        "ffmpeg was not found in your system PATH.\n\n" +
+                        "The bundled FFmpeg component is missing or damaged.\n\n" +
                         "Audio could not be remuxed — a silent video has been saved instead.\n\n" +
-                        "Install ffmpeg from https://ffmpeg.org/download.html and add it to PATH.",
-                        "ffmpeg Not Found", MessageBoxButton.OK, MessageBoxImage.Warning));
+                        "Reinstall Softcurse Media Lab AI, or select a valid ffmpeg.exe in Settings.",
+                        "FFmpeg Unavailable", MessageBoxButton.OK, MessageBoxImage.Warning));
                 if (File.Exists(processedNoAudio) && !File.Exists(finalOutput))
                     File.Copy(processedNoAudio, finalOutput, true);
             }
@@ -349,6 +358,10 @@ namespace SoftcurseMediaLabAI.Views
             {
                 if (File.Exists(processedNoAudio) && !File.Exists(finalOutput))
                     File.Copy(processedNoAudio, finalOutput, true);
+            }
+            finally
+            {
+                _activeFfmpegProcess = null;
             }
         }
 
@@ -382,22 +395,32 @@ namespace SoftcurseMediaLabAI.Views
         // ════════════════════════════════════════════════════════════════
 
         private void RetouchMode_Checked(object sender, RoutedEventArgs e)
+            => ShowRetouchMode();
+
+        public void ShowRetouchMode()
         {
             if (ConvertModeBtn == null || RetouchPanel == null) return;
             ConvertModeBtn.IsChecked = false;
+            RetouchModeBtn.IsChecked = true;
             RetouchPanel.Visibility = Visibility.Visible;
             ConvertPanel.Visibility = Visibility.Collapsed;
+            ForgeTitleText.Text = "VIDEO RETOUCH";
             LoadVideoBtn.Content = "LOAD VIDEO";
             LoadVideoBtn.Visibility = Visibility.Visible;
             VideoInfoText.Text = _videoPath != null ? $"{Path.GetFileName(_videoPath)}" : "AWAITING VIDEO INPUT...";
         }
 
         private void ConvertMode_Checked(object sender, RoutedEventArgs e)
+            => ShowConverterMode();
+
+        public void ShowConverterMode()
         {
             if (RetouchModeBtn == null || ConvertPanel == null) return;
             RetouchModeBtn.IsChecked = false;
+            ConvertModeBtn.IsChecked = true;
             RetouchPanel.Visibility = Visibility.Collapsed;
             ConvertPanel.Visibility = Visibility.Visible;
+            ForgeTitleText.Text = "AV CONVERTER";
             LoadVideoBtn.Visibility = Visibility.Collapsed;
             VideoInfoText.Text = $"{_convertFiles.Count} file(s) queued.";
         }
@@ -451,7 +474,7 @@ namespace SoftcurseMediaLabAI.Views
                 OutputFolderBox.Text = Path.GetDirectoryName(dlg.FileNames[0]) ?? "";
 
             UpdateFileCount();
-            ConvertStatusText.Text = $"{added} file(s) added — {_convertFiles.Count} queued.";
+            UiStatus.Set(ConvertStatusText, $"{added} file(s) added — {_convertFiles.Count} queued.");
         }
 
         private void AddFolder_Click(object sender, RoutedEventArgs e)
@@ -463,7 +486,7 @@ namespace SoftcurseMediaLabAI.Views
             if (string.IsNullOrWhiteSpace(OutputFolderBox.Text))
                 OutputFolderBox.Text = Directory.GetParent(folder)?.FullName ?? folder;
 
-            ConvertStatusText.Text = "Scanning folder...";
+            UiStatus.Set(ConvertStatusText, "Scanning folder…", UiStatusKind.Working);
             Task.Run(() =>
             {
                 var files = ScanFolder(folder);
@@ -472,9 +495,9 @@ namespace SoftcurseMediaLabAI.Views
                     int added = 0;
                     foreach (var f in files) added += IngestFile(f);
                     UpdateFileCount();
-                    ConvertStatusText.Text = files.Count == 0
-                        ? "No supported files found."
-                        : $"{added} file(s) added — {_convertFiles.Count} queued.";
+                    UiStatus.Set(ConvertStatusText,
+                        files.Count == 0 ? "No supported files found." : $"{added} file(s) added — {_convertFiles.Count} queued.",
+                        files.Count == 0 ? UiStatusKind.Warning : UiStatusKind.Ready);
                 });
             });
         }
@@ -504,7 +527,7 @@ namespace SoftcurseMediaLabAI.Views
             ConvertFileList.Items.Clear();
             UpdateFileCount();
             ConvertProgressBar.Value = 0;
-            ConvertStatusText.Text = "Ready — add files to begin.";
+            UiStatus.Set(ConvertStatusText, "Ready — add files to begin.");
         }
 
         private int IngestFile(string path)
@@ -565,7 +588,7 @@ namespace SoftcurseMediaLabAI.Views
             bool srcIsVideo = VideoExts.Contains(Path.GetExtension(src).ToLowerInvariant());
             bool dstIsVideo = vcodec != null;
 
-            var cmd = new List<string> { "ffmpeg", "-y", "-i", src };
+            var cmd = new List<string> { FfmpegService.GetExecutable(), "-y", "-i", src };
 
             if (dstIsVideo && srcIsVideo)
             {
@@ -693,12 +716,13 @@ namespace SoftcurseMediaLabAI.Views
                         var psi = new ProcessStartInfo
                         {
                             FileName = cmd[0],
-                            Arguments = string.Join(" ", cmd.Skip(1).Select(a => a.Contains(' ') ? $"\"{a}\"" : a)),
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
                             UseShellExecute = false,
                             CreateNoWindow = true
                         };
+                        foreach (string argument in cmd.Skip(1))
+                            psi.ArgumentList.Add(argument);
                         using var proc = Process.Start(psi);
                         if (proc != null)
                         {
@@ -717,7 +741,7 @@ namespace SoftcurseMediaLabAI.Views
                     }
                     catch (System.ComponentModel.Win32Exception)
                     {
-                        msg = "ffmpeg not found — install from ffmpeg.org";
+                        msg = "Bundled FFmpeg is missing or damaged — reinstall the app";
                     }
                     catch (Exception ex)
                     {
@@ -731,16 +755,16 @@ namespace SoftcurseMediaLabAI.Views
                     Dispatcher.BeginInvoke(() =>
                     {
                         ConvertProgressBar.Value = (double)d / total * 100;
-                        ConvertStatusText.Text = $"[{d}/{total}]  {m}";
+                        UiStatus.Set(ConvertStatusText, $"[{d}/{total}]  {m}", UiStatusKind.Working);
                     });
                 }
             });
 
             _isConverting = false;
             ConvertAllBtn.IsEnabled = true;
-            ConvertStatusText.Text = ok == total
-                ? $"✔  Done! {ok}/{total} converted → {outDir}"
-                : $"⚠  Finished with errors: {ok}/{total} succeeded.";
+            UiStatus.Set(ConvertStatusText,
+                ok == total ? $"Done — {ok}/{total} converted to {outDir}" : $"Finished with errors — {ok}/{total} succeeded.",
+                ok == total ? UiStatusKind.Success : UiStatusKind.Warning);
         }
 
         private static string BestError(string stderr)

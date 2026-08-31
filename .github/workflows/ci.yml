@@ -1,0 +1,40 @@
+name: Windows CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      CI: "true"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Install .NET 8 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+          cache: true
+          cache-dependency-path: |
+            gui/GeminiWatermarkRemover.csproj
+            tests/SoftcurseMediaLabAI.Tests/SoftcurseMediaLabAI.Tests.csproj
+
+      - name: Build, test, and audit dependencies
+        shell: pwsh
+        run: ./scripts/verify.ps1
+
+      # Public installers are intentionally produced only by the complete release
+      # workflow, where the redistributable LaMa model and signing material exist.
+      # CI must never publish a model-less artifact that looks like a full installer.

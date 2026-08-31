@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.modernwpf.com/2019"
              Background="Transparent">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -56,13 +57,22 @@
                                Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" FontSize="11"/>
                     <ComboBox x:Name="ExecutionProviderCombo" Width="220" Style="{StaticResource HudComboBox}">
                         <ComboBoxItem Content="CPU (Default)"/>
-                        <ComboBoxItem Content="CUDA (NVIDIA GPU)"/>
                         <ComboBoxItem Content="DirectML (Any GPU)"/>
                     </ComboBox>
                 </StackPanel>
-                <TextBlock Text="Note: GPU execution requires appropriate CUDA/DirectML drivers installed."
+                <TextBlock Text="DirectML works with supported GPUs on Windows; CPU is the compatibility fallback."
                            FontSize="10" Foreground="{StaticResource TextDimBrush}" Margin="180,0,0,8"
                            FontFamily="Segoe UI"/>
+                <TextBlock Text="Changing the provider or model directory requires an app restart."
+                           FontSize="10" Foreground="{StaticResource GoldAccentBrush}" Margin="180,0,0,8"
+                           FontFamily="Segoe UI"/>
+                <TextBlock x:Name="LastProviderText" FontSize="10"
+                           Foreground="{StaticResource TextDimBrush}" Margin="180,0,0,8"
+                           FontFamily="Segoe UI"/>
+                <Button x:Name="RetryDirectMlButton" Content="RETRY DIRECTML ON NEXT USE"
+                        Height="28" Margin="180,0,0,8" HorizontalAlignment="Left"
+                        Style="{StaticResource BtnOutline}" Padding="12,0"
+                        Visibility="Collapsed" Click="RetryDirectMl_Click"/>
                 <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
                     <TextBlock Text="Model Directory:" VerticalAlignment="Center" Width="180"
                                Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" FontSize="11"/>
@@ -89,7 +99,35 @@
                                Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" FontSize="11"/>
                     <TextBox x:Name="ApiEndpointTextBox" Text="http://127.0.0.1:7860/"
                              Width="320" Style="{StaticResource HudTextBox}"/>
+                    <Button x:Name="TestApiButton" Content="TEST" Height="30" Margin="10,0,0,0"
+                            Style="{StaticResource BtnOutline}" Padding="12,0" Click="TestApi_Click"/>
                 </StackPanel>
+                <TextBlock Text="Remote endpoints receive the images you process. Only use a server you trust."
+                           FontSize="10" Foreground="#E6A84A" Margin="180,0,0,4" FontFamily="Segoe UI"/>
+                <TextBlock x:Name="ApiStatusText" Text="Not tested" FontSize="10"
+                           Foreground="{StaticResource TextDimBrush}" Margin="180,0,0,0" FontFamily="Segoe UI"
+                           AutomationProperties.LiveSetting="Polite"/>
+            </StackPanel>
+        </Border>
+
+        <!-- FFmpeg -->
+        <Border Grid.Row="4" BorderBrush="{StaticResource BorderBrightBrush}" BorderThickness="1"
+                Background="#0A1520" Padding="16" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="FFMPEG / VIDEO &amp; AUDIO" FontSize="12" FontWeight="Bold"
+                           Foreground="{StaticResource CyberAccentBrush}" Margin="0,0,0,12" FontFamily="Segoe UI"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="FFmpeg executable:" VerticalAlignment="Center" Width="180"
+                               Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI" FontSize="11"/>
+                    <TextBox x:Name="FfmpegPathTextBox" Width="320" Style="{StaticResource HudTextBox}"/>
+                    <Button Content="BROWSE" Height="30" Margin="10,0,0,0" Style="{StaticResource BtnOutline}"
+                            Padding="12,0" Click="BrowseFfmpeg_Click"/>
+                    <Button x:Name="TestFfmpegButton" Content="TEST" Height="30" Margin="6,0,0,0"
+                            Style="{StaticResource BtnOutline}" Padding="12,0" Click="TestFfmpeg_Click"/>
+                </StackPanel>
+                <TextBlock x:Name="FfmpegStatusText" Text="Bundled FFmpeg is used automatically. Selecting another ffmpeg.exe is an optional override."
+                           FontSize="10" Foreground="{StaticResource TextDimBrush}" Margin="180,0,0,0" FontFamily="Segoe UI"
+                           AutomationProperties.LiveSetting="Polite"/>
             </StackPanel>
         </Border>
 
@@ -100,4 +138,5 @@
                     Click="SaveSettings_Click"/>
         </StackPanel>
     </Grid>
+    </ScrollViewer>
 </UserControl>

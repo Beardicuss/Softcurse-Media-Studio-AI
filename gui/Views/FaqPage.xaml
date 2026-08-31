@@ -1,0 +1,209 @@
+<UserControl x:Class="SoftcurseMediaLabAI.Views.FaqPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent">
+    <UserControl.Resources>
+        <Style x:Key="FaqCard" TargetType="Border">
+            <Setter Property="Background" Value="#0A1520"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="18"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+        <Style x:Key="FaqHeading" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource CyberAccentBrush}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="Margin" Value="0,0,0,9"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style x:Key="FaqSubheading" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource GoldAccentBrush}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="Margin" Value="0,10,0,4"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style x:Key="FaqBody" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="LineHeight" Value="19"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,2,0,2"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,14">
+            <TextBlock Text="FAQ &amp; USER GUIDE" FontSize="20" FontWeight="Bold"
+                       Foreground="{StaticResource CyberAccentBrush}" FontFamily="Segoe UI">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="#00E5FF" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
+                </TextBlock.Effect>
+            </TextBlock>
+            <TextBlock Text="Softcurse Media Lab AI 1.0.0 — features, workflows, requirements, privacy, and troubleshooting"
+                       Style="{StaticResource FaqBody}" Foreground="{StaticResource TextDimBrush}" Margin="0,5,0,0"/>
+            <Rectangle Height="1" Fill="{StaticResource BorderBrush}" Margin="0,10,0,0"/>
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="SearchBox" Grid.Column="0" Height="34" Style="{StaticResource HudTextBox}"
+                     ToolTip="Search the FAQ by feature, format, requirement, or error"
+                     AutomationProperties.Name="Search FAQ" TextChanged="SearchBox_TextChanged"/>
+            <Button Grid.Column="1" Content="CLEAR" Height="34" Margin="8,0,0,0" Padding="16,0"
+                    Style="{StaticResource BtnOutline}" Click="ClearSearch_Click"/>
+            <TextBlock x:Name="SearchHint" Grid.Column="0" Text="Search: API, retouch, MP3, privacy, GPU, converter…"
+                       IsHitTestVisible="False" VerticalAlignment="Center" Margin="11,0,0,0"
+                       Foreground="{StaticResource TextDimBrush}" FontSize="10" FontFamily="Segoe UI"/>
+        </Grid>
+
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel x:Name="FaqSections">
+                <Border Style="{StaticResource FaqCard}" BorderBrush="{StaticResource GoldAccentBrush}"
+                        Tag="api required requirements internet offline local stable diffusion account key external server">
+                    <StackPanel>
+                        <TextBlock Text="DOES THE APP REQUIRE AN API?" Style="{StaticResource FaqHeading}"
+                                   Foreground="{StaticResource GoldAccentBrush}"/>
+                        <TextBlock Style="{StaticResource FaqBody}" FontWeight="Bold"
+                                   Text="No. The core app does not need an API, account, API key, separate .NET installation, or separate FFmpeg installation."/>
+                        <TextBlock Text="The Image Editor, local LaMa retouch, automatic watermark detection, background removal, Smart Select, filters, Toolkit Lab, Video Retouch, and AV Converter work locally." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="An external Stable Diffusion-compatible API is only needed for Generative Image API and Expand. Upscale can use that API for ESRGAN, but automatically falls back to local bicubic scaling." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="If API status says OFFLINE, local features remain available." Style="{StaticResource FaqBody}" Foreground="{StaticResource SuccessBrush}"/>
+                        <Button Content="OPEN SETTINGS" Width="130" Height="30" HorizontalAlignment="Left" Margin="0,10,0,0"
+                                Style="{StaticResource BtnOutline}" Click="OpenSettings_Click"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource FaqCard}" Tag="getting started install requirements windows runtime ffmpeg model gpu cpu directml internet">
+                    <StackPanel>
+                        <TextBlock Text="GETTING STARTED &amp; INCLUDED COMPONENTS" Style="{StaticResource FaqHeading}"/>
+                        <TextBlock Text="Required" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="• Windows 10 or Windows 11, 64-bit.&#x0a;• Enough disk space for the installed application and temporary media files.&#x0a;• Read/write access to the input and output folders you choose." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="Already included in the installer" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="• .NET 8 desktop runtime.&#x0a;• LaMa ONNX model for local inpainting.&#x0a;• FFmpeg 9.0.1 and FFprobe for audio/video work.&#x0a;• DirectML, ONNX Runtime, OpenCV, and native dependencies." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="Optional" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="• DirectML GPU acceleration. CPU is the compatibility fallback.&#x0a;• A trusted Stable Diffusion-compatible WebUI API for generative features.&#x0a;• Internet access only when you intentionally connect to a remote API." Style="{StaticResource FaqBody}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource FaqCard}" Tag="image editor load save retouch watermark object remove automatic mask brush eraser lasso smart select background gradient text layer filter undo redo compare">
+                    <StackPanel>
+                        <TextBlock Text="IMAGE EDITOR — HOW TO USE IT" Style="{StaticResource FaqHeading}"/>
+                        <TextBlock Text="Basic workflow" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="1. Choose LOAD IMAGE or drop an image into the editor.&#x0a;2. Select a mode. EDITOR automatically detects likely watermark regions; manual modes let you define the exact area.&#x0a;3. Select RETOUCH to run local LaMa inpainting.&#x0a;4. Review with COMPARE, use undo/redo when needed, then COPY or SAVE as PNG/JPEG." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="Selection and editing modes" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="• Cyber Brush paints the removal mask; Eraser removes mask strokes.&#x0a;• Poly Lasso creates a point-to-point mask; right-click closes the shape.&#x0a;• Smart Select uses local OpenCV GrabCut: click the subject to produce a region mask.&#x0a;• Move pans the canvas; Color Picker samples a color.&#x0a;• Gradient supports linear/radial fills; Text places styled text.&#x0a;• Layer Mask paints white to reveal and black to hide, then FLATTEN applies it." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="Other actions" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="BG REMOVE uses local foreground extraction and creates transparency. BLUR, SHARP, and NOISE are local filters. RESET returns to the originally loaded image. Undo/redo history is memory-budgeted to avoid unlimited RAM growth." Style="{StaticResource FaqBody}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource FaqCard}" Tag="expand outpaint upscale esrgan bicubic api image editor remote upload">
+                    <StackPanel>
+                        <TextBlock Text="EXPAND &amp; UPSCALE" Style="{StaticResource FaqHeading}"/>
+                        <TextBlock Text="Expand" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="EXPAND pads the canvas and creates an automatic border mask, then sends the image and mask to the configured Stable Diffusion-compatible img2img endpoint for outpainting. It requires a working API." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="Upscale" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="UPSCALE requests 2× ESRGAN through the API when available. If the API is unavailable—or you decline a remote upload—the app performs a local 2× bicubic upscale instead. The fallback enlarges dimensions but does not invent AI detail." Style="{StaticResource FaqBody}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource FaqCard}" Tag="toolkit resizer image converter png jpg jpeg bmp webp tiff gif ico svg palette color metadata exif dpi compare crop aspect">
+                    <StackPanel>
+                        <TextBlock Text="TOOLKIT LAB — IMAGE UTILITIES" Style="{StaticResource FaqHeading}"/>
+                        <TextBlock Text="• Image Resizer: enter width/height, use percentage or presets, optionally lock aspect ratio, then RESIZE &amp; SAVE.&#x0a;• Format Converter: batch-convert PNG, JPG, BMP, WebP, TIFF, GIF and ICO; it also supports SVG-to-PNG input. Quality controls appear where applicable.&#x0a;• Color Palette Extractor: finds dominant colors and percentages; copy individual values or all HEX codes.&#x0a;• Metadata Viewer: inspect image/EXIF information, change DPI, or save a copy with EXIF removed.&#x0a;• Image Compare: load before/after images and drag the divider; SWAP reverses sides.&#x0a;• Crop Tool: drag the crop area, select an aspect-ratio preset, then CROP &amp; SAVE." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="Toolkit operations are local and do not need the Generative API." Style="{StaticResource FaqBody}" Foreground="{StaticResource SuccessBrush}" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource FaqCard}" Tag="video retouch inpaint watermark frame mask brush mp4 avi mkv mov audio remux lama ffmpeg">
+                    <StackPanel>
+                        <TextBlock Text="VIDEO RETOUCH — FRAME-BY-FRAME INPAINTING" Style="{StaticResource FaqHeading}"/>
+                        <TextBlock Text="1. Open VIDEO RETOUCH and select LOAD VIDEO. The picker accepts MP4, AVI, MKV, and MOV.&#x0a;2. Paint the watermark/object area on the preview; adjust brush size or clear the mask.&#x0a;3. Select INPAINT VIDEO and choose an MP4 destination.&#x0a;4. The app applies the local LaMa model to the selected area on each frame, then bundled FFmpeg remuxes the original audio." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="Long/high-resolution videos can be CPU/GPU intensive. DirectML may improve processing on compatible GPUs; CPU remains available. Cancelling stops active processing and FFmpeg child processes." Style="{StaticResource FaqBody}" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource FaqCard}" Tag="audio video converter ffmpeg ffprobe batch files folder mp3 wav flac aac ogg opus m4a wma aiff ac3 mp4 mkv avi mov webm ogv wmv flv m4v ts 3gp bitrate resolution fps">
+                    <StackPanel>
+                        <TextBlock Text="AV CONVERTER — AUDIO &amp; VIDEO" Style="{StaticResource FaqHeading}"/>
+                        <TextBlock Text="1. Add files or a folder.&#x0a;2. Choose AUDIO or VIDEO output.&#x0a;3. Select format, quality/bitrate, sample rate/channels, or video resolution/frame rate as applicable.&#x0a;4. Select an output folder and CONVERT ALL. Each queued file reports its own result." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="Audio outputs" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="MP3, WAV, FLAC, AAC, OGG, OPUS, M4A, WMA, AIFF, AC3." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="Video outputs" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="MP4, MKV, AVI, MOV, WebM, OGV, WMV, FLV, M4V, TS, 3GP." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="FFmpeg and FFprobe are bundled. No download, PATH configuration, API, or internet connection is required." Style="{StaticResource FaqBody}" Foreground="{StaticResource SuccessBrush}" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource FaqCard}" Tag="generative image api stable diffusion automatic1111 webui prompt negative img2img endpoint setup server api key local remote mask">
+                    <StackPanel>
+                        <TextBlock Text="GENERATIVE IMAGE API — WHAT IT IS" Style="{StaticResource FaqHeading}"/>
+                        <TextBlock Text="This tab is a client for a separately running Stable Diffusion WebUI-compatible server. It is not a bundled generator and it does not contain Stable Diffusion model weights." Style="{StaticResource FaqBody}" FontWeight="Bold"/>
+                        <TextBlock Text="Setup" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="1. Start a compatible WebUI server with its API enabled. For an AUTOMATIC1111-style server this is normally started with the --api option.&#x0a;2. In Settings, enter the base address, for example http://127.0.0.1:7860/, and select TEST.&#x0a;3. Load an image in Image Editor, open GENERATIVE API, enter positive and negative prompts, then SEND TO API.&#x0a;4. The server processes /sdapi/v1/img2img and the validated result returns to Image Editor." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="The normal sidebar workflow performs whole-image img2img. Expand creates its own mask for border inpainting. This version does not provide API-key/header authentication, so only use endpoints whose access model is compatible." Style="{StaticResource FaqBody}" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource FaqCard}" Tag="settings output folder model directory cpu gpu directml ffmpeg override api endpoint test health status restart">
+                    <StackPanel>
+                        <TextBlock Text="SETTINGS &amp; STARTUP HEALTH" Style="{StaticResource FaqHeading}"/>
+                        <TextBlock Text="• Default Output Folder controls the initial save/conversion destination.&#x0a;• Execution Provider selects CPU or DirectML. If DirectML cannot run the model, the app falls back to CPU and remembers the verified provider.&#x0a;• Model Directory can override automatic discovery; leave it empty for the bundled models folder.&#x0a;• API Endpoint affects only optional generative requests. TEST checks /sdapi/v1/options.&#x0a;• FFmpeg is bundled automatically. The path picker is only for an explicit advanced override.&#x0a;• Core, FFmpeg, and API indicators at the bottom of the window show startup health; hover them for details." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="Changes to execution provider or model directory require an application restart." Style="{StaticResource FaqBody}" Foreground="{StaticResource GoldAccentBrush}" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource FaqCard}" Tag="privacy security offline upload remote api files temp metadata network trusted endpoint local data settings">
+                    <StackPanel>
+                        <TextBlock Text="PRIVACY &amp; DATA HANDLING" Style="{StaticResource FaqHeading}"/>
+                        <TextBlock Text="Local tools process files on this PC. The app only sends image data over the network when you intentionally use Expand, Generative Image API, or the API-based Upscale route." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="Remote endpoints receive the source image and relevant mask/prompt. Use HTTPS and a server you trust. The app warns before remote uploads. It rejects embedded URL credentials and known cloud-metadata addresses." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="Temporary processing files are kept in the app's temporary workspace and cleaned on shutdown/startup. Settings are stored under the current Windows user's Local AppData folder." Style="{StaticResource FaqBody}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource FaqCard}" Tag="troubleshooting error api offline ffmpeg unavailable model missing directml slow crash output permission reinstall">
+                    <StackPanel>
+                        <TextBlock Text="TROUBLESHOOTING" Style="{StaticResource FaqHeading}"/>
+                        <TextBlock Text="API OFFLINE" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="This is normal if you do not use generative features. If you do, confirm the server is running, API mode is enabled, the base URL is correct, and TEST succeeds." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="FFMPEG UNAVAILABLE" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="The bundled component is missing or damaged. Reinstall the complete 1.0.0 package. Do not download random codec executables or edit the Windows PATH." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="MODEL MISSING / AI FAILURE" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="Leave Model Directory empty to use the bundled model. If DirectML fails, select CPU or use RETRY DIRECTML after updating the GPU driver." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="SLOW VIDEO OR RETOUCH" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="Processing cost rises with resolution, frame count, and mask size. Try DirectML, close memory-heavy applications, or work with a shorter/lower-resolution source." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="CANNOT SAVE" Style="{StaticResource FaqSubheading}"/>
+                        <TextBlock Text="Choose a writable user folder, confirm free disk space, and avoid overwriting a file currently open in another application." Style="{StaticResource FaqBody}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource FaqCard}" Tag="keyboard shortcuts ctrl save copy undo redo zoom brush eraser move smart select color navigation tabs">
+                    <StackPanel>
+                        <TextBlock Text="KEYBOARD SHORTCUTS" Style="{StaticResource FaqHeading}"/>
+                        <TextBlock Text="Navigation: Ctrl+1 Image Editor, Ctrl+2 Toolkit, Ctrl+3 Video Retouch, Ctrl+4 AV Converter, Ctrl+5 Generative API, Ctrl+6 Settings, Ctrl+7 FAQ." Style="{StaticResource FaqBody}"/>
+                        <TextBlock Text="Editor: Ctrl+S Save, Ctrl+C Copy, Ctrl+Z Undo, Ctrl+Shift+Z Redo, Ctrl+0 Fit, B Brush, E Eraser, V Move, M Smart Select, I Color Picker, +/− Zoom." Style="{StaticResource FaqBody}"/>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock x:Name="NoResultsText" Text="No FAQ sections match your search. Try a feature name, format, API, privacy, GPU, or error."
+                           Visibility="Collapsed" Style="{StaticResource FaqBody}" TextAlignment="Center"
+                           Foreground="{StaticResource GoldAccentBrush}" Margin="20"/>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

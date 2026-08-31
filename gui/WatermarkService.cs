@@ -10,23 +10,56 @@ using System.Runtime.InteropServices;
 
 namespace SoftcurseMediaLabAI
 {
+    public enum WatermarkExecutionProvider { Cpu = 0, DirectML = 1 }
+
     public class WatermarkService : IDisposable
     {
         private string _modelPath = string.Empty;
         private InferenceSession? _session;
         private bool _usingGpu = false;
+        private readonly object _inferenceLock = new();
+        private readonly WatermarkExecutionProvider? _providerOverride;
+        private readonly bool _rememberSuccessfulProvider;
+        private readonly string? _modelPathOverride;
+        public bool IsInitialized => _session != null;
+        public WatermarkExecutionProvider? ActiveExecutionProvider =>
+            _session == null ? null : (_usingGpu ? WatermarkExecutionProvider.DirectML : WatermarkExecutionProvider.Cpu);
 
         // ── F-03: use ModelPathResolver instead of hardcoded relative path ──
-        public WatermarkService() { }
+        public WatermarkService(
+            WatermarkExecutionProvider? providerOverride = null,
+            bool rememberSuccessfulProvider = true,
+            string? modelPathOverride = null)
+        {
+            _providerOverride = providerOverride;
+            _rememberSuccessfulProvider = rememberSuccessfulProvider;
+            _modelPathOverride = modelPathOverride;
+        }
 
         public void Initialize()
         {
             if (_session != null) return;
 
             // F-03: resolve via central resolver (config → release → dev)
-            _modelPath = ModelPathResolver.Resolve("lama_fp32.onnx");
+            _modelPath = string.IsNullOrWhiteSpace(_modelPathOverride)
+                ? ModelPathResolver.Resolve("lama_fp32.onnx")
+                : Path.GetFullPath(_modelPathOverride);
+            if (!File.Exists(_modelPath))
+                throw new FileNotFoundException("The configured LaMa model file was not found.", _modelPath);
 
-            _session = TryCreateSession(_modelPath, preferGpu: true, out _usingGpu);
+            WatermarkExecutionProvider requestedProvider = _providerOverride ??
+                (AppSettings.ExecutionProvider == 1
+                    ? WatermarkExecutionProvider.DirectML
+                    : WatermarkExecutionProvider.Cpu);
+            // A benchmark override must always exercise the requested provider. In normal app
+            // use, remember a proven DirectML runtime failure and avoid paying that startup cost
+            // again until the user explicitly resets the result in Settings.
+            bool knownDirectMlFailure = _providerOverride == null &&
+                requestedProvider == WatermarkExecutionProvider.DirectML &&
+                AppSettings.LastKnownGoodExecutionProvider == 0;
+            bool preferGpu = requestedProvider == WatermarkExecutionProvider.DirectML &&
+                !knownDirectMlFailure;
+            _session = TryCreateSession(_modelPath, preferGpu, out _usingGpu);
             Debug.WriteLine($"[WatermarkService] Session created. GPU={_usingGpu}, model={_modelPath}");
         }
 
@@ -85,23 +118,56 @@ namespace SoftcurseMediaLabAI
             using Mat image = Cv2.ImRead(inputPath, ImreadModes.Color);
             if (image.Empty()) throw new InvalidOperationException($"Failed to read image: {inputPath}");
 
-            using Mat result = RemoveWatermarkFromMat(image, manualMask, debug);
-            Cv2.ImWrite(outputPath, result);
+            Mat? processed = null;
+            try
+            {
+                TryRemoveWatermarkFromMat(image, out processed, manualMask, debug);
+                if (!Cv2.ImWrite(outputPath, processed ?? image))
+                    throw new IOException($"Failed to write output image: {outputPath}");
+            }
+            finally
+            {
+                processed?.Dispose();
+            }
         }
 
         // ── F-05 fix: public overload that takes Mat directly (used by VideoLabPage) ──
         public Mat RemoveWatermarkFromMat(Mat image, byte[]? manualMask = null, bool debug = false)
         {
-            if (_session == null) Initialize();
+            TryRemoveWatermarkFromMat(image, out Mat? result, manualMask, debug);
+            return result ?? image.Clone();
+        }
 
+        /// <summary>
+        /// Returns false without allocating a full-frame clone when no watermark is detected.
+        /// Callers that can pass the original frame through (notably video encoding) should use
+        /// this overload. A true result is owned by the caller and must be disposed.
+        /// </summary>
+        public bool TryRemoveWatermarkFromMat(
+            Mat image, out Mat? result, byte[]? manualMask = null, bool debug = false)
+        {
+            if (image.Empty()) throw new ArgumentException("Input image is empty.", nameof(image));
+            lock (_inferenceLock)
+            {
+                result = RemoveWatermarkFromMatCore(image, manualMask, debug);
+                return result != null;
+            }
+        }
+
+        private Mat? RemoveWatermarkFromMatCore(Mat image, byte[]? manualMask, bool debug)
+        {
             // 1. Build mask
             using Mat mask = BuildMask(image, manualMask);
+
+            // Nothing was selected/detected: preserve pixels and avoid loading the 208 MB model.
+            if (Cv2.CountNonZero(mask) == 0) return null;
+            if (_session == null) Initialize();
 
             // Dilate mask to ensure full coverage
             using Mat dilateKernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(5, 5));
             Cv2.Dilate(mask, mask, dilateKernel, iterations: 2);
 
-            if (debug) Cv2.ImWrite(Path.Combine(Path.GetTempPath(), "debug_mask.png"), mask);
+            if (debug) Cv2.ImWrite(TempFileManager.CreateTempPath("debug_mask", ".png"), mask);
 
             // 2. Compute ROI
             Rect roi = ComputeRoi(image, mask, targetSize: 512);
@@ -143,6 +209,7 @@ namespace SoftcurseMediaLabAI
             try
             {
                 results = _session!.Run(namedInputs);
+                RememberSuccessfulProvider(_usingGpu ? 1 : 0);
             }
             catch (OnnxRuntimeException ex) when (IsEpRejectionError(ex))
             {
@@ -151,6 +218,7 @@ namespace SoftcurseMediaLabAI
                 _session?.Dispose();
                 _session = TryCreateSession(_modelPath, preferGpu: false, out _usingGpu);
                 results = _session!.Run(namedInputs);
+                RememberSuccessfulProvider(0);
             }
 
             using (results)
@@ -186,6 +254,12 @@ namespace SoftcurseMediaLabAI
 
             return blended;
             } // end using(results)
+        }
+
+        private void RememberSuccessfulProvider(int provider)
+        {
+            if (_rememberSuccessfulProvider)
+                AppSettings.RecordSuccessfulExecutionProvider(provider);
         }
 
         // ── F-08: unsafe memory copy for tensor fill (5-10× faster than At<Vec3b>) ──
@@ -269,65 +343,17 @@ namespace SoftcurseMediaLabAI
 
         private static Mat BuildMask(Mat image, byte[]? manualMask)
         {
-            Mat mask = new Mat(image.Rows, image.Cols, MatType.CV_8UC1, Scalar.All(0));
-
             if (manualMask != null && manualMask.Length == image.Rows * image.Cols)
             {
+                Mat mask = new Mat(image.Rows, image.Cols, MatType.CV_8UC1, Scalar.All(0));
                 // Fast bulk copy via Marshal
                 using Mat manualMat = new Mat(image.Rows, image.Cols, MatType.CV_8UC1);
                 Marshal.Copy(manualMask, 0, manualMat.Data, manualMask.Length);
                 // Threshold: any non-zero alpha → white mask
                 Cv2.Threshold(manualMat, mask, 0, 255, ThresholdTypes.Binary);
+                return mask;
             }
-            else
-            {
-                // F-09: renamed internally — this detects BRIGHT HIGH-CONTRAST regions,
-                // not a Gemini-specific watermark. Works best for white/bright watermarks.
-                DetectHighContrastMask(image, mask);
-            }
-
-            return mask;
-        }
-
-        // ── F-09: renamed and comment updated to reflect actual behaviour ──
-        /// <summary>
-        /// Detects bright, high-contrast blobs in the image and builds an inpainting mask.
-        /// Most effective for white/semi-transparent watermarks. Currently searches
-        /// the bottom-right third (most common watermark placement); could be generalised
-        /// in a future pass to cover the full image.
-        /// </summary>
-        private static void DetectHighContrastMask(Mat image, Mat mask)
-        {
-            int h = image.Rows;
-            int w = image.Cols;
-
-            // Search bottom-right third — most common watermark placement
-            Rect searchRoi = new Rect(w - w / 3, h - h / 3, w / 3, h / 3);
-            using Mat roiImage = new Mat(image, searchRoi);
-            using Mat roiMask  = new Mat(mask,  searchRoi);
-
-            using Mat gray   = new Mat();
-            using Mat thresh = new Mat();
-            Cv2.CvtColor(roiImage, gray, ColorConversionCodes.BGR2GRAY);
-            Cv2.Threshold(gray, thresh, 200, 255, ThresholdTypes.Binary);
-
-            Cv2.FindContours(thresh, out Point[][] contours, out _,
-                RetrievalModes.External, ContourApproximationModes.ApproxSimple);
-
-            foreach (var contour in contours)
-            {
-                double area = Cv2.ContourArea(contour);
-                if (area < 50 || area > 5000) continue;
-
-                Rect br = Cv2.BoundingRect(contour);
-                double ar = (double)br.Width / Math.Max(1, br.Height);
-                if (ar > 0.5 && ar < 2.0)
-                    Cv2.DrawContours(roiMask, new[] { contour }, -1, Scalar.All(255), -1);
-            }
-
-            // Dilate aggressively to cover semi-transparent halo
-            using Mat kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(15, 15));
-            Cv2.Dilate(roiMask, roiMask, kernel, iterations: 2);
+            return WatermarkMaskDetector.Detect(image);
         }
 
         private static Rect ComputeRoi(Mat image, Mat mask, int targetSize)

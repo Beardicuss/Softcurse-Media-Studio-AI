@@ -159,7 +159,8 @@ namespace SoftcurseMediaLabAI.Views
             var dlg = new SaveFileDialog
             {
                 FileName = Path.GetFileNameWithoutExtension(_resizerSourcePath) + $"_{w}x{h}{ext}",
-                Filter = "PNG|*.png|JPG|*.jpg|BMP|*.bmp|WebP|*.webp|All files|*.*"
+                Filter = "PNG|*.png|JPG|*.jpg|BMP|*.bmp|WebP|*.webp|All files|*.*",
+                InitialDirectory = Directory.Exists(AppSettings.DefaultOutputFolder) ? AppSettings.DefaultOutputFolder : string.Empty
             };
             if (dlg.ShowDialog() != true) return;
 
@@ -1119,7 +1120,8 @@ namespace SoftcurseMediaLabAI.Views
             var dlg = new SaveFileDialog
             {
                 FileName = Path.GetFileNameWithoutExtension(_cropSourcePath) + $"_crop{ext}",
-                Filter = "PNG|*.png|JPG|*.jpg|BMP|*.bmp|All files|*.*"
+                Filter = "PNG|*.png|JPG|*.jpg|BMP|*.bmp|All files|*.*",
+                InitialDirectory = Directory.Exists(AppSettings.DefaultOutputFolder) ? AppSettings.DefaultOutputFolder : string.Empty
             };
             if (dlg.ShowDialog() != true) return;
 

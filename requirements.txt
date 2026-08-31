@@ -4,12 +4,10 @@
 .NET 8.0 SDK or Runtime (Windows 10/11 64-bit)
 
 # NuGet Dependencies (Auto-restored on build)
-Microsoft.ML.OnnxRuntime (1.24.2)
-Microsoft.ML.OnnxRuntime.DirectML (1.24.2)
-Microsoft.ML.OnnxRuntime.Managed (1.24.2)
+Microsoft.ML.OnnxRuntime.DirectML (1.24.4; includes managed API and CPU fallback)
 ModernWpfUI (0.9.6)
 OpenCvSharp4.Windows (4.9.0.20240103)
-System.Numerics.Tensors (10.0.2)
+System.Numerics.Tensors (10.0.11)
 
 # GPU Acceleration
 DirectML — Built-in, works with any GPU on Windows 10+. No extra install needed.
@@ -18,17 +16,14 @@ CPU — Always available as fallback.
 
 # External Tools
 FFmpeg — Required for Forge Lab audio/video conversion and video retouch audio remuxing.
-  Must be available on PATH or installed separately.
+  It can be available on PATH or selected as a specific ffmpeg.exe in Settings.
 
 # External API Requirements (For Generative AI Features)
 Stable Diffusion WebUI (AUTOMATIC1111 or similar) running locally or remotely with the `--api` flag enabled.
 Default expected endpoint: http://127.0.0.1:7860/
-Required for: Generative Fill, Expand, Upscale, Sprite Generator.
+Required for: Generative Fill and Expand. Upscale has a built-in bicubic fallback.
 Download: https://github.com/AUTOMATIC1111/stable-diffusion-webui/releases
 
 # External Models
 - LaMa ONNX Model: Place in models/lama_fp32.onnx (next to the application executable).
-- Segment Anything Model (SAM) ONNX: Encoder and Decoder models placed in models/ directory.
-  - sam_vit_b_01ec64.quant.onnx (encoder)
-  - sam_vit_b_01ec64.decoder.quant.onnx (decoder)
 - Custom model directory can be set in Settings → Model Directory.

@@ -11,6 +11,7 @@ namespace SoftcurseMediaLabAI
     {
         protected override void OnStartup(StartupEventArgs e)
         {
+            PerformanceMetrics.BeginStartup();
             base.OnStartup(e);
             ModernWpf.ThemeManager.Current.ApplicationTheme = ModernWpf.ApplicationTheme.Dark;
 

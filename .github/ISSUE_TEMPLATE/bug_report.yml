@@ -1,0 +1,66 @@
+name: Bug report
+description: Report a reproducible Softcurse Media Lab AI problem.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please remove private file paths, API keys, and personal media from logs or screenshots.
+  - type: input
+    id: version
+    attributes:
+      label: Application version
+      placeholder: "For example: 1.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      options:
+        - Image Editor
+        - Toolkit Lab
+        - Forge Lab
+        - AI Generation Hub
+        - Settings or startup
+        - Installer or update
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: "1. Open…\n2. Select…\n3. Observe…"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and error text
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Windows version, CPU/GPU, selected execution provider, FFmpeg version, and API type if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs or screenshots
+      description: Drag files here after removing secrets, private paths, and personal media.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed API keys, credentials, and private media from this report.
+          required: true

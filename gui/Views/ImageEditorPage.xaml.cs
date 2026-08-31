@@ -16,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Controls;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace SoftcurseMediaLabAI.Views
 {
@@ -29,10 +30,12 @@ namespace SoftcurseMediaLabAI.Views
 
         private string? _originalImagePath;
 
-        // ── Undo / Redo stacks ──────────────────────────────────────────
-        private readonly Stack<BitmapSource> _undoStack = new();
-        private readonly Stack<BitmapSource> _redoStack = new();
-        private const int MaxUndoLevels = 20;
+        // Undo/redo stores file-backed states instead of decoded full-resolution bitmaps.
+        // This keeps retained UI memory nearly constant while preserving a bounded disk budget.
+        private readonly BoundedMemoryHistory<string> _history = new(
+            maxEntries: 20,
+            maxBytes: 256L * 1024 * 1024,
+            sizeOf: EstimateHistoryFileBytes);
 
         // ── Move Tool state ─────────────────────────────────────────────
         private bool _isDragging;
@@ -50,10 +53,9 @@ namespace SoftcurseMediaLabAI.Views
         private Image? _maskOverlayImage;
 
         private WatermarkService _watermarkService;
-        private SamModelService _samService;
-        private static readonly System.Net.Http.HttpClient _httpClient = new System.Net.Http.HttpClient();
+        private RegionSelectService _regionSelectService;
 
-        public ImageEditorPage(WatermarkService sharedService, SamModelService samService)
+        public ImageEditorPage(WatermarkService sharedService, RegionSelectService regionSelectService)
         {
             InitializeComponent();
             this.Unloaded += ImageEditorPage_Unloaded;
@@ -66,7 +68,7 @@ namespace SoftcurseMediaLabAI.Views
             // Color picker eyedropper on canvas click
             ImageContainer.MouseLeftButtonDown += Eyedropper_MouseDown;
             _watermarkService = sharedService;
-            _samService = samService;
+            _regionSelectService = regionSelectService;
         }
 
         private void ImageEditorPage_Unloaded(object sender, RoutedEventArgs e)
@@ -80,15 +82,26 @@ namespace SoftcurseMediaLabAI.Views
             openFileDialog.Filter = "Image files (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|All files (*.*)|*.*";
             if (openFileDialog.ShowDialog() == true)
             {
-                LoadImage(openFileDialog.FileName);
+                TryLoadImage(openFileDialog.FileName);
             }
         }
 
-        /// <summary>Public entry-point so MainWindow can load a file programmatically (e.g. from Sprite Generator).</summary>
-        public void LoadImageFromPath(string path) => LoadImage(path);
+        /// <summary>Public entry-point so MainWindow can load a file programmatically.</summary>
+        public void LoadImageFromPath(string path) => TryLoadImage(path);
 
-        private void LoadImage(string path)
+        private bool TryLoadImage(string path)
         {
+            try
+            {
+                ImageFileValidator.Validate(path);
+            }
+            catch (Exception ex)
+            {
+                StatusText.Text = $"Image load failed: {ex.Message}";
+                DarkMessageBox.Show(ex.Message, "Cannot Open Image", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
             _originalImagePath = path;
             _currentImagePath = path;
             
@@ -115,6 +128,7 @@ namespace SoftcurseMediaLabAI.Views
             PolygonCanvas.Height = bitmap.PixelHeight;
             
             StatusText.Text = $"Loaded: {System.IO.Path.GetFileName(path)}";
+            ResReadout.Text = $"{bitmap.PixelWidth} × {bitmap.PixelHeight}";
             DropZone.Visibility = Visibility.Collapsed;
             
             // Reset processed image path
@@ -123,8 +137,7 @@ namespace SoftcurseMediaLabAI.Views
             CopyButton.IsEnabled = false;
 
             // Reset undo/redo
-            _undoStack.Clear();
-            _redoStack.Clear();
+            _history.Clear();
             UndoButton.IsEnabled = false;
             RedoButton.IsEnabled = false;
             UpscaleButton.IsEnabled = true;
@@ -144,6 +157,7 @@ namespace SoftcurseMediaLabAI.Views
                 if (PolygonCanvas != null) PolygonCanvas.Children.Clear();
                 if (SamCanvas != null) SamCanvas.Children.Clear();
             }
+            return true;
         }
         
         private void DisplayImage(string path)
@@ -179,7 +193,7 @@ namespace SoftcurseMediaLabAI.Views
         {
             int pct = (int)(ImageScaleTransform.ScaleX * 100);
             if (ZoomLevelText != null) ZoomLevelText.Text = $"{pct}%";
-            if (ZoomReadout != null) ZoomReadout.Text = $"{pct}%";
+            if (ZoomReadout != null) ZoomReadout.Text = $"ZOOM {pct}%";
         }
 
         private void DropZone_Drop(object sender, DragEventArgs e)
@@ -189,7 +203,7 @@ namespace SoftcurseMediaLabAI.Views
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
                 if (files.Length > 0)
                 {
-                    LoadImage(files[0]);
+                    TryLoadImage(files[0]);
                 }
             }
         }
@@ -238,10 +252,10 @@ namespace SoftcurseMediaLabAI.Views
                     ClearMaskButton.Visibility = Visibility.Visible;
                     StatusText.Text = "Poly Lasso: Left-click points, Right-click to close shape, then APPLY MASK.";
                     break;
-                case 4: // Magic Wand (SAM)
+                case 4: // Smart Select (GrabCut)
                     SamCanvas.Visibility = Visibility.Visible;
                     ClearMaskButton.Visibility = Visibility.Visible;
-                    StatusText.Text = "Magic Wand: Click an object to generate a mask, then APPLY MASK.";
+                    StatusText.Text = "Smart Select: Click an object to create a region mask, then APPLY MASK.";
                     break;
                 case 5: // Move Tool
                     StatusText.Text = "Move Tool: Drag the image to pan. (V)";
@@ -331,17 +345,12 @@ namespace SoftcurseMediaLabAI.Views
              
              Point p = e.GetPosition(SamCanvas);
              
-             // F-02: show honest label depending on whether real SAM models are loaded
-             bool samLoaded = _samService.IsSamAvailable;
-             StatusText.Text = samLoaded
-                 ? "SAM: Generating mask from point..."
-                 : "Region Select (GrabCut): Generating mask from point...";
+             StatusText.Text = "Smart Select: Generating region mask...";
              SamCanvas.IsHitTestVisible = false;
 
              try
              {
-                 // F-02: GenerateMaskAsync now returns (maskPath, usedSam) tuple
-                 var (maskPath, usedSam) = await _samService.GenerateMaskAsync(_currentImagePath, p);
+                 string maskPath = await _regionSelectService.GenerateMaskAsync(_currentImagePath, p);
 
                  TempFileManager.RegisterTempFile(maskPath);
 
@@ -364,9 +373,7 @@ namespace SoftcurseMediaLabAI.Views
                  SamCanvas.Children.Clear();
                  SamCanvas.Children.Add(maskOverlay);
 
-                 StatusText.Text = usedSam
-                     ? "SAM Mask Generated."
-                     : "Region Mask Generated (GrabCut). For better results, install SAM ONNX models.";
+                 StatusText.Text = "Smart Select region mask generated.";
              }
              catch (Exception ex)
              {
@@ -383,7 +390,7 @@ namespace SoftcurseMediaLabAI.Views
             if (!string.IsNullOrEmpty(_originalImagePath))
             {
                 // Reload the original image
-                LoadImage(_originalImagePath);
+                TryLoadImage(_originalImagePath);
                 ManualInkCanvas.Strokes.Clear();
                 StatusText.Text = "Reset to original image.";
             }
@@ -394,6 +401,7 @@ namespace SoftcurseMediaLabAI.Views
             if (string.IsNullOrEmpty(_currentImagePath)) return;
 
             StatusText.Text = "Processing...";
+            RetouchButton.IsEnabled = false;
             
             // Capture UI state on the UI thread!
             bool isManualMode = ToolComboBox.SelectedIndex > 0;
@@ -403,7 +411,7 @@ namespace SoftcurseMediaLabAI.Views
             {
                 try
                 {
-                    string tempOutput = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"processed_{Guid.NewGuid()}.png");
+                    string tempOutput = TempFileManager.CreateTempPath("processed", ".png");
                     
                     byte[]? mask = null;
                     if (isManualMode)
@@ -477,7 +485,6 @@ namespace SoftcurseMediaLabAI.Views
                         // Update current state
                         _currentImagePath = tempOutput;
                         _processedImagePath = tempOutput;
-                        TempFileManager.RegisterTempFile(tempOutput);
                         
                         DisplayImage(_currentImagePath);
                         
@@ -498,6 +505,7 @@ namespace SoftcurseMediaLabAI.Views
                     Dispatcher.Invoke(() => StatusText.Text = $"Error: {ex.Message}");
                 }
             });
+            RetouchButton.IsEnabled = true;
         }
 
         private async void RemoveBackground_Click(object sender, RoutedEventArgs e)
@@ -512,7 +520,7 @@ namespace SoftcurseMediaLabAI.Views
             {
                 try
                 {
-                    string tempOutput = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"bgrm_{Guid.NewGuid()}.png");
+                    string tempOutput = TempFileManager.CreateTempPath("bgrm", ".png");
                     
                     using OpenCvSharp.Mat img = OpenCvSharp.Cv2.ImRead(inputPath, OpenCvSharp.ImreadModes.Color);
                     using OpenCvSharp.Mat mask = new OpenCvSharp.Mat(img.Size(), OpenCvSharp.MatType.CV_8UC1, OpenCvSharp.Scalar.All((int)OpenCvSharp.GrabCutClasses.BGD));
@@ -549,9 +557,11 @@ namespace SoftcurseMediaLabAI.Views
                     {
                         _currentImagePath = tempOutput;
                         _processedImagePath = tempOutput;
-                        TempFileManager.RegisterTempFile(tempOutput);
                         DisplayImage(_currentImagePath);
                         StatusText.Text = "Background removed successfully!";
+                        SaveButton.IsEnabled = true;
+                        CopyButton.IsEnabled = true;
+                        if (CompareToggleButton != null) CompareToggleButton.IsEnabled = true;
                     });
                 }
                 catch (Exception ex)
@@ -566,6 +576,11 @@ namespace SoftcurseMediaLabAI.Views
         private async void Expand_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_currentImagePath)) return;
+            string apiEndpoint = AppSettings.ApiEndpoint;
+            if (GenerativeApiClient.IsRemoteEndpoint(apiEndpoint) &&
+                DarkMessageBox.Show("Expand will upload this image to the configured remote API. Continue?",
+                    "Remote API Privacy", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                return;
             StatusText.Text = "Expanding Canvas (AI Outpainting)...";
             ExpandButton.IsEnabled = false;
 
@@ -611,61 +626,30 @@ namespace SoftcurseMediaLabAI.Views
                         denoising_strength = 0.85
                     };
 
-                    var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-                    string jsonPayload = JsonSerializer.Serialize(payload, jsonOptions);
-                    var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
-                    string apiUrl = AppSettings.ApiEndpoint;
-                    
-                    // F-04: validate URL before making any network request
-                    if (!AppSettings.IsApiEndpointSafe(apiUrl, out string expandUrlError))
+                    using JsonDocument doc = await GenerativeApiClient.PostJsonAsync(
+                        apiEndpoint, "sdapi/v1/img2img", payload, CancellationToken.None);
+                    if (doc.RootElement.TryGetProperty("images", out JsonElement imagesElement) && imagesElement.GetArrayLength() > 0)
                     {
-                        Dispatcher.Invoke(() => {
-                            DarkMessageBox.Show($"Expand API endpoint is invalid:\n{expandUrlError}\n\nPlease update it in Settings.", "Invalid API Endpoint", MessageBoxButton.OK, MessageBoxImage.Warning);
-                            StatusText.Text = "Expand Failed: Invalid API endpoint.";
-                        });
-                        return;
-                    }
-                    
-                    // Route to img2img specifically — avoid double-appending
-                    string expandApiUrl;
-                    if (apiUrl.Contains("sdapi/v1/img2img", System.StringComparison.OrdinalIgnoreCase))
-                        expandApiUrl = apiUrl;
-                    else
-                    {
-                        if (!apiUrl.EndsWith("/")) apiUrl += "/";
-                        expandApiUrl = apiUrl + "sdapi/v1/img2img";
-                    }
-
-                    HttpResponseMessage response = await _httpClient.PostAsync(expandApiUrl, content);
-                    
-                    if (response.IsSuccessStatusCode)
-                    {
-                        string responseBody = await response.Content.ReadAsStringAsync();
-                        using JsonDocument doc = JsonDocument.Parse(responseBody);
-                        if (doc.RootElement.TryGetProperty("images", out JsonElement imagesElement) && imagesElement.GetArrayLength() > 0)
-                        {
-                            string returningBase64 = imagesElement[0].GetString()!;
-                            byte[] returningBytes = Convert.FromBase64String(returningBase64);
+                        string returningBase64 = imagesElement[0].GetString()
+                            ?? throw new GenerativeApiException("API returned an empty image payload.");
+                        byte[] returningBytes = Convert.FromBase64String(returningBase64);
                             
-                            string tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"expand_{Guid.NewGuid()}.png");
+                            string tempFile = TempFileManager.CreateTempPath("expand", ".png");
                             System.IO.File.WriteAllBytes(tempFile, returningBytes);
                             
-                            Dispatcher.Invoke(() =>
-                            {
-                                _currentImagePath = tempFile;
-                                _processedImagePath = tempFile;
-                                TempFileManager.RegisterTempFile(tempFile);
-                                DisplayImage(_currentImagePath);
-                                StatusText.Text = "Canvas Expanded successfully!";
-                            });
-                        }
+                        ImageFileValidator.Validate(tempFile);
+                        Dispatcher.Invoke(() =>
+                        {
+                            PushUndo();
+                            _currentImagePath = tempFile;
+                            _processedImagePath = tempFile;
+                            DisplayImage(_currentImagePath);
+                            SaveButton.IsEnabled = true;
+                            CopyButton.IsEnabled = true;
+                            StatusText.Text = "Canvas expanded successfully!";
+                        });
                     }
-                    else
-                    {
-                        Dispatcher.Invoke(() => DarkMessageBox.Show($"Expand API Error: {response.StatusCode}\nEnsure Stable Diffusion is running with --api.", "Error", MessageBoxButton.OK, MessageBoxImage.Error));
-                        Dispatcher.Invoke(() => StatusText.Text = "Expand API Error");
-                    }
+                    else throw new GenerativeApiException("API returned no expanded image.");
                 }
                 catch (Exception ex)
                 {
@@ -684,6 +668,8 @@ namespace SoftcurseMediaLabAI.Views
             saveFileDialog.Filter = "PNG Image (*.png)|*.png|JPEG Image (*.jpg)|*.jpg";
             saveFileDialog.DefaultExt = ".png";
             saveFileDialog.AddExtension = true;
+            if (Directory.Exists(AppSettings.DefaultOutputFolder))
+                saveFileDialog.InitialDirectory = AppSettings.DefaultOutputFolder;
             
             if (saveFileDialog.ShowDialog() == true)
             {
@@ -780,7 +766,7 @@ namespace SoftcurseMediaLabAI.Views
                     case Key.B: ToolComboBox.SelectedIndex = 1; e.Handled = true; return; // Brush
                     case Key.E: ToolComboBox.SelectedIndex = 2; e.Handled = true; return; // Eraser
                     case Key.V: ToolComboBox.SelectedIndex = 5; e.Handled = true; return; // Move
-                    case Key.M: ToolComboBox.SelectedIndex = 4; e.Handled = true; return; // Magic Wand
+                    case Key.M: ToolComboBox.SelectedIndex = 4; e.Handled = true; return; // Smart Select
                     case Key.I: ToolComboBox.SelectedIndex = 6; e.Handled = true; return; // Color Picker (eyedropper)
                     case Key.OemPlus:
                     case Key.Add:
@@ -798,6 +784,11 @@ namespace SoftcurseMediaLabAI.Views
         {
             if (_currentImagePath == null) return;
             string targetPath = _processedImagePath ?? _currentImagePath;
+            string apiEndpoint = AppSettings.ApiEndpoint;
+            bool useAiApi = !GenerativeApiClient.IsRemoteEndpoint(apiEndpoint) ||
+                DarkMessageBox.Show(
+                    "AI Upscale will upload this image to the configured remote API. Choose No to use the local bicubic fallback instead.",
+                    "Remote API Privacy", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
             
             StatusText.Text = "Upscaling image (AI ESRGAN 2x)...";
             UpscaleButton.IsEnabled = false;
@@ -826,63 +817,36 @@ namespace SoftcurseMediaLabAI.Views
                         image = base64Image
                     };
 
-                    var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-                    string jsonPayload = JsonSerializer.Serialize(payload, jsonOptions);
-                    var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
-                    string apiUrl = AppSettings.ApiEndpoint;
-                    
-                    // F-04: validate URL before making any network request
-                    if (!AppSettings.IsApiEndpointSafe(apiUrl, out string upscaleUrlError))
+                    // AI is optional; a bounded request failure falls back to local bicubic scaling.
+                    if (useAiApi) try
                     {
-                        Dispatcher.Invoke(() => {
-                            DarkMessageBox.Show($"Upscale API endpoint is invalid:\n{upscaleUrlError}\n\nPlease update it in Settings.", "Invalid API Endpoint", MessageBoxButton.OK, MessageBoxImage.Warning);
-                            StatusText.Text = "Upscale Failed: Invalid API endpoint.";
-                        });
-                        return; // Fallback happens outside
-                    }
-                    
-                    // Avoid URL double-append
-                    string upscaleApiUrl;
-                    if (apiUrl.Contains("sdapi/v1/extra-single-image", System.StringComparison.OrdinalIgnoreCase))
-                        upscaleApiUrl = apiUrl;
-                    else
-                    {
-                        if (!apiUrl.EndsWith("/")) apiUrl += "/";
-                        upscaleApiUrl = apiUrl + "sdapi/v1/extra-single-image";
-                    }
-
-                    // Note: Don't throw error on AI failure, just silently fall back
-                    try 
-                    {
-                        HttpResponseMessage response = await _httpClient.PostAsync(upscaleApiUrl, content);
-                        if (response.IsSuccessStatusCode)
+                        using JsonDocument doc = await GenerativeApiClient.PostJsonAsync(
+                            apiEndpoint, "sdapi/v1/extra-single-image", payload, CancellationToken.None,
+                            TimeSpan.FromMinutes(3));
+                        if (doc.RootElement.TryGetProperty("image", out JsonElement imageElement))
                         {
-                            string responseBody = await response.Content.ReadAsStringAsync();
-                            using JsonDocument doc = JsonDocument.Parse(responseBody);
-                            if (doc.RootElement.TryGetProperty("image", out JsonElement imageElement))
-                            {
-                                string returningBase64 = imageElement.GetString()!;
-                                byte[] returningBytes = Convert.FromBase64String(returningBase64);
+                            string returningBase64 = imageElement.GetString()
+                                ?? throw new GenerativeApiException("API returned an empty image payload.");
+                            byte[] returningBytes = Convert.FromBase64String(returningBase64);
                                 
-                                string tempOutput = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"upscaled_{Guid.NewGuid()}.png");
+                                string tempOutput = TempFileManager.CreateTempPath("upscaled", ".png");
                                 System.IO.File.WriteAllBytes(tempOutput, returningBytes);
                                 
-                                Dispatcher.Invoke(() =>
-                                {
-                                    _processedImagePath = tempOutput;
-                                    _currentImagePath = tempOutput;
-                                    TempFileManager.RegisterTempFile(tempOutput);
-                                    DisplayImage(tempOutput);
+                            ImageFileValidator.Validate(tempOutput);
+                            Dispatcher.Invoke(() =>
+                            {
+                                PushUndo();
+                                _processedImagePath = tempOutput;
+                                _currentImagePath = tempOutput;
+                                DisplayImage(tempOutput);
                                     
                                     StatusText.Text = "Image upscaled successfully! (AI ESRGAN 2x)";
                                     UpscaleButton.IsEnabled = true;
                                     SaveButton.IsEnabled = true;
                                     CopyButton.IsEnabled = true;
                                     if (CompareToggleButton != null) CompareToggleButton.IsEnabled = true;
-                                });
-                                return; // Success! Skip fallback
-                            }
+                            });
+                            return;
                         }
                     } 
                     catch { /* Ignore API errors to trigger fallback */ }
@@ -893,14 +857,14 @@ namespace SoftcurseMediaLabAI.Views
                     using var upscaled = new OpenCvSharp.Mat();
                     OpenCvSharp.Cv2.Resize(img, upscaled, new OpenCvSharp.Size(img.Cols * 2, img.Rows * 2), 0, 0, OpenCvSharp.InterpolationFlags.Cubic);
                     
-                    string tempFallback = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"upscaled_{Guid.NewGuid()}.png");
+                    string tempFallback = TempFileManager.CreateTempPath("upscaled", ".png");
                     OpenCvSharp.Cv2.ImWrite(tempFallback, upscaled);
                     
                     Dispatcher.Invoke(() =>
                     {
+                        PushUndo();
                         _processedImagePath = tempFallback;
                         _currentImagePath = tempFallback;
-                        TempFileManager.RegisterTempFile(tempFallback);
                         DisplayImage(tempFallback);
                         
                         StatusText.Text = "Image upscaled successfully! (Cubic fall-back)";
@@ -993,7 +957,7 @@ namespace SoftcurseMediaLabAI.Views
 
         // ── TOOLBAR ICON CLICK HANDLERS ─────────────────────────────────
         // Each handler switches the ToolComboBox to the corresponding index:
-        //   0 = EDITOR, 1 = CYBER BRUSH, 2 = ERASER, 3 = POLY LASSO, 4 = MAGIC WAND
+        //   0 = EDITOR, 1 = CYBER BRUSH, 2 = ERASER, 3 = POLY LASSO, 4 = SMART SELECT
 
         private void ToolIcon_Editor_Click(object sender, MouseButtonEventArgs e)
         {
@@ -1100,18 +1064,9 @@ namespace SoftcurseMediaLabAI.Views
         // ── UNDO / REDO ────────────────────────────────────────────────
         private void PushUndo()
         {
-            if (ImageDisplay?.Source is BitmapSource current)
+            if (!string.IsNullOrWhiteSpace(_currentImagePath) && File.Exists(_currentImagePath))
             {
-                if (_undoStack.Count >= MaxUndoLevels)
-                {
-                    // Convert to list, remove oldest, convert back
-                    var list = _undoStack.ToList();
-                    list.RemoveAt(list.Count - 1);
-                    _undoStack.Clear();
-                    for (int i = list.Count - 1; i >= 0; i--) _undoStack.Push(list[i]);
-                }
-                _undoStack.Push(current);
-                _redoStack.Clear();
+                _history.Record(_currentImagePath);
                 UndoButton.IsEnabled = true;
                 RedoButton.IsEnabled = false;
             }
@@ -1119,30 +1074,41 @@ namespace SoftcurseMediaLabAI.Views
 
         private void Undo_Click(object sender, RoutedEventArgs e)
         {
-            if (_undoStack.Count == 0) return;
-            // Push current to redo
-            if (ImageDisplay?.Source is BitmapSource current)
-                _redoStack.Push(current);
-
-            var prev = _undoStack.Pop();
-            ImageDisplay!.Source = prev;
-            UndoButton.IsEnabled = _undoStack.Count > 0;
+            if (string.IsNullOrWhiteSpace(_currentImagePath) ||
+                !_history.TryUndo(_currentImagePath, out string? previous) ||
+                string.IsNullOrWhiteSpace(previous) || !File.Exists(previous)) return;
+            ApplyHistoryState(previous);
+            UndoButton.IsEnabled = _history.UndoCount > 0;
             RedoButton.IsEnabled = true;
-            StatusText.Text = $"Undo ({_undoStack.Count} remaining)";
+            StatusText.Text = $"Undo ({_history.UndoCount} remaining, {_history.RetainedBytes / 1024 / 1024} MB history)";
         }
 
         private void Redo_Click(object sender, RoutedEventArgs e)
         {
-            if (_redoStack.Count == 0) return;
-            // Push current to undo
-            if (ImageDisplay?.Source is BitmapSource current)
-                _undoStack.Push(current);
-
-            var next = _redoStack.Pop();
-            ImageDisplay!.Source = next;
+            if (string.IsNullOrWhiteSpace(_currentImagePath) ||
+                !_history.TryRedo(_currentImagePath, out string? next) ||
+                string.IsNullOrWhiteSpace(next) || !File.Exists(next)) return;
+            ApplyHistoryState(next);
             UndoButton.IsEnabled = true;
-            RedoButton.IsEnabled = _redoStack.Count > 0;
-            StatusText.Text = $"Redo ({_redoStack.Count} remaining)";
+            RedoButton.IsEnabled = _history.RedoCount > 0;
+            StatusText.Text = $"Redo ({_history.RedoCount} remaining, {_history.RetainedBytes / 1024 / 1024} MB history)";
+        }
+
+        private void ApplyHistoryState(string path)
+        {
+            _currentImagePath = path;
+            bool isOriginal = string.Equals(path, _originalImagePath, StringComparison.OrdinalIgnoreCase);
+            _processedImagePath = isOriginal ? null : path;
+            DisplayImage(path);
+            SaveButton.IsEnabled = !isOriginal;
+            CopyButton.IsEnabled = !isOriginal;
+            if (CompareToggleButton != null) CompareToggleButton.IsEnabled = !isOriginal;
+        }
+
+        private static long EstimateHistoryFileBytes(string path)
+        {
+            try { return new FileInfo(path).Length; }
+            catch (Exception) { return 0; }
         }
 
         // ── MOVE TOOL HANDLERS ──────────────────────────────────────────
@@ -1289,7 +1255,7 @@ namespace SoftcurseMediaLabAI.Views
 
             await Task.Run(() =>
             {
-                string tempOut = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"blur_{Guid.NewGuid()}.png");
+                string tempOut = TempFileManager.CreateTempPath("blur", ".png");
                 FilterService.ApplyGaussianBlur(inputPath, tempOut, 7);
                 Dispatcher.Invoke(() =>
                 {
@@ -1313,7 +1279,7 @@ namespace SoftcurseMediaLabAI.Views
 
             await Task.Run(() =>
             {
-                string tempOut = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"sharp_{Guid.NewGuid()}.png");
+                string tempOut = TempFileManager.CreateTempPath("sharp", ".png");
                 FilterService.ApplySharpen(inputPath, tempOut, 1.5);
                 Dispatcher.Invoke(() =>
                 {
@@ -1337,7 +1303,7 @@ namespace SoftcurseMediaLabAI.Views
 
             await Task.Run(() =>
             {
-                string tempOut = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"noise_{Guid.NewGuid()}.png");
+                string tempOut = TempFileManager.CreateTempPath("noise", ".png");
                 FilterService.ApplyNoise(inputPath, tempOut, 25);
                 Dispatcher.Invoke(() =>
                 {
@@ -1396,7 +1362,7 @@ namespace SoftcurseMediaLabAI.Views
             result.Freeze();
 
             // Save and display
-            string tempOut = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"gradient_{Guid.NewGuid()}.png");
+            string tempOut = TempFileManager.CreateTempPath("gradient", ".png");
             using (var stream = new System.IO.FileStream(tempOut, System.IO.FileMode.Create))
             {
                 var encoder = new PngBitmapEncoder();
@@ -1470,7 +1436,7 @@ namespace SoftcurseMediaLabAI.Views
             result.Freeze();
 
             // Save and display
-            string tempOut = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"text_{Guid.NewGuid()}.png");
+            string tempOut = TempFileManager.CreateTempPath("text", ".png");
             using (var stream = new System.IO.FileStream(tempOut, System.IO.FileMode.Create))
             {
                 var encoder = new PngBitmapEncoder();
@@ -1603,7 +1569,7 @@ namespace SoftcurseMediaLabAI.Views
             result.Freeze();
 
             // Save and display
-            string tempOut = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"masked_{Guid.NewGuid()}.png");
+            string tempOut = TempFileManager.CreateTempPath("masked", ".png");
             using (var stream = new System.IO.FileStream(tempOut, System.IO.FileMode.Create))
             {
                 var encoder = new PngBitmapEncoder();

@@ -46,7 +46,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <!-- ═══════════════════════════════════════════════════════════ -->
-            <!--  SOFTCURSE MEDIA STUDIO AI — SCI-FI HUD THEME v2.0         -->
+            <!--  SOFTCURSE MEDIA LAB AI — SCI-FI HUD THEME                -->
             <!-- ═══════════════════════════════════════════════════════════ -->
 
             <!-- Brushes -->
@@ -63,6 +63,29 @@
             <SolidColorBrush x:Key="GoldAccentBrush"     Color="#C8973A" />
             <SolidColorBrush x:Key="SuccessBrush"        Color="#00FF99" />
             <SolidColorBrush x:Key="WarnBrush"           Color="#FF8C00" />
+
+            <!-- Shared keyboard focus ring: gold keeps focus distinct from cyan hover/selection. -->
+            <Style x:Key="SoftcurseFocusVisual">
+                <Setter Property="Control.Template">
+                    <Setter.Value>
+                        <ControlTemplate>
+                            <Rectangle Margin="2" Stroke="{StaticResource GoldAccentBrush}"
+                                       StrokeThickness="2" StrokeDashArray="2 1" SnapsToDevicePixels="True"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="ToolTip">
+                <Setter Property="Background" Value="#F20A1520"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource GoldAccentBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="10,7"/>
+                <Setter Property="FontFamily" Value="Segoe UI"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="MaxWidth" Value="360"/>
+            </Style>
 
             <!-- ModernWpf system overrides -->
             <SolidColorBrush x:Key="SystemControlHighlightAccentBrush"            Color="#00E5FF" />
@@ -113,6 +136,9 @@
 
             <!-- ── PRIMARY BUTTON (cyan fill) ──────────────────────────── -->
             <Style x:Key="BtnPrimary" TargetType="Button">
+                <Setter Property="FocusVisualStyle" Value="{StaticResource SoftcurseFocusVisual}"/>
+                <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
+                <Setter Property="ToolTipService.InitialShowDelay" Value="350"/>
                 <Setter Property="Background"      Value="#CC00E5FF"/>
                 <Setter Property="Foreground"      Value="#060D14"/>
                 <Setter Property="BorderThickness" Value="0"/>
@@ -149,6 +175,9 @@
 
             <!-- ── OUTLINE BUTTON ──────────────────────────────────────── -->
             <Style x:Key="BtnOutline" TargetType="Button">
+                <Setter Property="FocusVisualStyle" Value="{StaticResource SoftcurseFocusVisual}"/>
+                <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
+                <Setter Property="ToolTipService.InitialShowDelay" Value="350"/>
                 <Setter Property="Background"      Value="Transparent"/>
                 <Setter Property="Foreground"      Value="{StaticResource CyberAccentBrush}"/>
                 <Setter Property="BorderBrush"     Value="{StaticResource BorderBrightBrush}"/>
@@ -189,6 +218,8 @@
 
             <!-- ── TOGGLE OUTLINE ──────────────────────────────────────── -->
             <Style x:Key="ToggleOutline" TargetType="ToggleButton">
+                <Setter Property="FocusVisualStyle" Value="{StaticResource SoftcurseFocusVisual}"/>
+                <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
                 <Setter Property="Background"      Value="Transparent"/>
                 <Setter Property="Foreground"      Value="{StaticResource CyberAccentBrush}"/>
                 <Setter Property="BorderBrush"     Value="{StaticResource BorderBrightBrush}"/>
@@ -226,6 +257,7 @@
 
             <!-- ── COMBO BOX ───────────────────────────────────────────── -->
             <Style x:Key="HudComboBox" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                <Setter Property="FocusVisualStyle" Value="{StaticResource SoftcurseFocusVisual}"/>
                 <Setter Property="Background"      Value="#0A1520"/>
                 <Setter Property="Foreground"      Value="{StaticResource CyberAccentBrush}"/>
                 <Setter Property="BorderBrush"     Value="{StaticResource BorderBrightBrush}"/>
@@ -282,6 +314,7 @@
 
             <!-- ── TEXTBOX ──────────────────────────────────────────────── -->
             <Style x:Key="HudTextBox" TargetType="TextBox">
+                <Setter Property="FocusVisualStyle" Value="{StaticResource SoftcurseFocusVisual}"/>
                 <Setter Property="Background"      Value="#06101A"/>
                 <Setter Property="Foreground"      Value="{StaticResource CyberAccentBrush}"/>
                 <Setter Property="BorderBrush"     Value="{StaticResource BorderBrightBrush}"/>

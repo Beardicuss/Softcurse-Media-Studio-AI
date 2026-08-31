@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <InformationalVersion>1.0.0</InformationalVersion>
+    <Authors>Softcurse</Authors>
+    <Company>Softcurse</Company>
+    <Product>Softcurse Media Lab AI</Product>
+    <RepositoryUrl>https://github.com/Beardicuss/Softcurse-Media-Studio-AI</RepositoryUrl>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+</Project>

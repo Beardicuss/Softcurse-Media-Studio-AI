@@ -23,7 +23,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="FORGE LAB" FontSize="16" FontWeight="Bold"
+                <TextBlock x:Name="ForgeTitleText" Grid.Column="0" Text="VIDEO RETOUCH" FontSize="16" FontWeight="Bold"
                            Foreground="{StaticResource CyberAccentBrush}" VerticalAlignment="Center"
                            FontFamily="Segoe UI">
                     <TextBlock.Effect>
@@ -108,7 +108,8 @@
                         <Button Content="CLEAR MASK" Click="ClearMask_Click" Margin="0,0,8,0"
                                 Style="{StaticResource BtnDanger}" Padding="12,6"/>
                         <Button x:Name="ProcessVideoButton" Content="INPAINT VIDEO" Click="ProcessVideo_Click"
-                                Style="{StaticResource BtnPrimary}" Padding="14,6" IsEnabled="False"/>
+                                Style="{StaticResource BtnPrimary}" Padding="14,6" IsEnabled="False"
+                                ToolTip="Choose a video first, then paint or clear the mask before processing."/>
                         <Button x:Name="CancelProcessButton" Content="CANCEL" Click="CancelProcess_Click"
                                 Margin="8,0,0,0" Visibility="Collapsed"
                                 Style="{StaticResource BtnDanger}" Padding="12,6"/>
@@ -330,7 +331,8 @@
                         </Border>
                         <TextBlock x:Name="ConvertStatusText" Text="Ready — add files to begin."
                                    FontSize="10" Foreground="{StaticResource TextDimBrush}"
-                                   FontFamily="Consolas" Margin="0,0,0,6"/>
+                                   FontFamily="Consolas" Margin="0,0,0,6"
+                                   AutomationProperties.LiveSetting="Polite"/>
                         <Button x:Name="ConvertAllBtn" Content="▶  CONVERT ALL" Click="ConvertAll_Click"
                                 Style="{StaticResource BtnPrimary}" Padding="14,8" FontSize="12"
                                 HorizontalAlignment="Stretch" FontWeight="Bold"/>

@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Threading.Tasks;
 using System.Windows.Threading;
+using System.Windows.Input;
 
 namespace SoftcurseMediaLabAI
 {
@@ -14,23 +15,22 @@ namespace SoftcurseMediaLabAI
         private Views.ToolkitLabPage? _toolkitPage;
         private Views.VideoLabPage? _videoPage;
         private Views.GenerativeFillPage? _genFillPage;
-        private Views.SpriteGeneratorPage? _spritePage;
+        private Views.FaqPage? _faqPage;
         private Views.SettingsPage? _settingsPage;
 
         private WatermarkService _sharedWatermarkService;
-        private SamModelService _sharedSamService;
+        private RegionSelectService _sharedRegionSelectService;
 
         public MainWindow()
         {
             InitializeComponent();
             _sharedWatermarkService = new WatermarkService();
-            _sharedSamService = new SamModelService();
+            _sharedRegionSelectService = new RegionSelectService();
 
-            // Start initializing the models in the background immediately
-            System.Threading.Tasks.Task.Run(() => _sharedWatermarkService.Initialize());
-            System.Threading.Tasks.Task.Run(() => _sharedSamService.InitializeAsync());
+            // AI models are loaded lazily on first use so non-AI tools start quickly.
+            TempFileManager.CleanupStale(TimeSpan.FromHours(24));
 
-            _imageEditorPage = new Views.ImageEditorPage(_sharedWatermarkService, _sharedSamService);
+            _imageEditorPage = new Views.ImageEditorPage(_sharedWatermarkService, _sharedRegionSelectService);
 
             // Set default frame content
             ContentFrame.Navigate(_imageEditorPage);
@@ -38,8 +38,10 @@ namespace SoftcurseMediaLabAI
             // Animate sidebar icons after layout is ready
             Loaded += (_, __) => 
             {
+                PerformanceMetrics.MarkUiReady();
                 StartSidebarAnimations();
                 StartLogoGlitch();
+                _ = RefreshHealthAsync();
             };
         }
 
@@ -81,7 +83,7 @@ namespace SoftcurseMediaLabAI
             VLPlayScale.BeginAnimation(ScaleTransform.ScaleXProperty, vlBreathX);
             VLPlayScale.BeginAnimation(ScaleTransform.ScaleYProperty, vlBreathY);
 
-            // AI Generation Hub: core breathing scale (2s cycle)
+            // Generative Image API: core breathing scale (2s cycle)
             var aiBreathX = new DoubleAnimation(1, 0.75, TimeSpan.FromSeconds(1))
             {
                 AutoReverse = true,
@@ -99,21 +101,29 @@ namespace SoftcurseMediaLabAI
         protected override void OnClosed(System.EventArgs e)
         {
             base.OnClosed(e);
+            _videoPage?.Dispose();
             _sharedWatermarkService?.Dispose();
-            _sharedSamService?.Dispose();
             TempFileManager.CleanupAll();
         }
 
         public void OpenImageInEditor(string filePath)
         {
             if (_imageEditorPage == null)
-                _imageEditorPage = new Views.ImageEditorPage(_sharedWatermarkService, _sharedSamService);
+                _imageEditorPage = new Views.ImageEditorPage(_sharedWatermarkService, _sharedRegionSelectService);
 
             ContentFrame.Navigate(_imageEditorPage);
             _imageEditorPage.LoadImageFromPath(filePath);
 
             // Update nav button styles
             UpdateNavSelection(NavImageEditor);
+        }
+
+        public void OpenSettings()
+        {
+            if (_settingsPage == null)
+                _settingsPage = new Views.SettingsPage();
+            ContentFrame.Navigate(_settingsPage);
+            UpdateNavSelection(NavSettings);
         }
 
         private void NavButton_Click(object sender, RoutedEventArgs e)
@@ -125,7 +135,7 @@ namespace SoftcurseMediaLabAI
                 {
                     case "ImagePage":
                         if (_imageEditorPage == null)
-                            _imageEditorPage = new Views.ImageEditorPage(_sharedWatermarkService, _sharedSamService);
+                            _imageEditorPage = new Views.ImageEditorPage(_sharedWatermarkService, _sharedRegionSelectService);
                         ContentFrame.Navigate(_imageEditorPage);
                         break;
                     case "ToolkitPage":
@@ -136,6 +146,13 @@ namespace SoftcurseMediaLabAI
                     case "VideoPage":
                         if (_videoPage == null)
                             _videoPage = new Views.VideoLabPage(_sharedWatermarkService);
+                        _videoPage.ShowRetouchMode();
+                        ContentFrame.Navigate(_videoPage);
+                        break;
+                    case "ConverterPage":
+                        if (_videoPage == null)
+                            _videoPage = new Views.VideoLabPage(_sharedWatermarkService);
+                        _videoPage.ShowConverterMode();
                         ContentFrame.Navigate(_videoPage);
                         break;
                     case "GenFillPage":
@@ -146,15 +163,15 @@ namespace SoftcurseMediaLabAI
                             _genFillPage.SetImage(_imageEditorPage.CurrentImagePath);
                         ContentFrame.Navigate(_genFillPage);
                         break;
-                    case "SpritePage":
-                        if (_spritePage == null)
-                            _spritePage = new Views.SpriteGeneratorPage(_sharedWatermarkService);
-                        ContentFrame.Navigate(_spritePage);
-                        break;
                     case "SettingsPage":
                         if (_settingsPage == null)
                             _settingsPage = new Views.SettingsPage();
                         ContentFrame.Navigate(_settingsPage);
+                        break;
+                    case "FaqPage":
+                        if (_faqPage == null)
+                            _faqPage = new Views.FaqPage();
+                        ContentFrame.Navigate(_faqPage);
                         break;
                 }
 
@@ -162,10 +179,62 @@ namespace SoftcurseMediaLabAI
             }
         }
 
+        public async Task RefreshHealthAsync()
+        {
+            try
+            {
+                AppHealthSnapshot health = await AppHealthService.CheckAsync();
+                ApplyHealth(CoreHealthDot, CoreHealthText, health.Core);
+                ApplyHealth(FfmpegHealthDot, FfmpegHealthText, health.Ffmpeg);
+                ApplyHealth(ApiHealthDot, ApiHealthText, health.Api);
+            }
+            catch (Exception ex)
+            {
+                ApiHealthText.Text = "HEALTH ERROR";
+                ApiHealthText.ToolTip = ex.Message;
+                ApiHealthText.Foreground = (Brush)FindResource("WarnBrush");
+            }
+        }
+
+        private void ApplyHealth(System.Windows.Shapes.Ellipse dot, TextBlock text, ComponentHealth health)
+        {
+            string brushKey = health.Level switch
+            {
+                HealthLevel.Ready => "SuccessBrush",
+                HealthLevel.Optional => "GoldAccentBrush",
+                _ => "CyberMagentaBrush"
+            };
+            Brush brush = (Brush)FindResource(brushKey);
+            dot.Fill = brush;
+            text.Foreground = brush;
+            text.Text = health.Label;
+            text.ToolTip = health.Detail;
+        }
+
+        private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (Keyboard.Modifiers != ModifierKeys.Control) return;
+            Button? destination = e.Key switch
+            {
+                Key.D1 or Key.NumPad1 => NavImageEditor,
+                Key.D2 or Key.NumPad2 => NavBatch,
+                Key.D3 or Key.NumPad3 => NavVideo,
+                Key.D4 or Key.NumPad4 => NavConverter,
+                Key.D5 or Key.NumPad5 => NavGenFill,
+                Key.D6 or Key.NumPad6 => NavSettings,
+                Key.D7 or Key.NumPad7 => NavFaq,
+                _ => null
+            };
+            if (destination is null) return;
+            NavButton_Click(destination, new RoutedEventArgs());
+            destination.Focus();
+            e.Handled = true;
+        }
+
         private void UpdateNavSelection(Button selectedBtn)
         {
             // Reset all nav buttons to default style
-            var navButtons = new[] { NavImageEditor, NavBatch, NavVideo, NavGenFill, NavSprite, NavSettings };
+            var navButtons = new[] { NavImageEditor, NavBatch, NavVideo, NavConverter, NavGenFill, NavFaq, NavSettings };
             foreach (var navBtn in navButtons)
             {
                 if (navBtn != null)

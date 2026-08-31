@@ -35,7 +35,7 @@
                         <ComboBoxItem Content="CYBER BRUSH" />
                         <ComboBoxItem Content="ERASER" />
                         <ComboBoxItem Content="POLY LASSO" />
-                        <ComboBoxItem Content="MAGIC WAND" />
+                        <ComboBoxItem Content="SMART SELECT" />
                         <ComboBoxItem Content="MOVE" />
                         <ComboBoxItem Content="COLOR PICKER" />
                         <ComboBoxItem Content="GRADIENT" />
@@ -49,19 +49,21 @@
 
                     <Button x:Name="BackgroundButton" Content="BG REMOVE" Height="30" Margin="0,0,6,0"
                             Style="{StaticResource BtnOutline}" Padding="10,0"
-                            Click="RemoveBackground_Click" IsEnabled="False" ToolTip="Remove Background"/>
+                            Click="RemoveBackground_Click" IsEnabled="False"
+                            ToolTip="Load an image first. Removes the background locally with GrabCut."/>
 
                     <Button x:Name="RetouchButton" Content="RETOUCH" Height="30" Margin="0,0,6,0"
                             Style="{StaticResource BtnPrimary}" Padding="10,0"
-                            Click="RemoveWatermark_Click" IsEnabled="False" ToolTip="Apply Mask (Retouch)"/>
+                            Click="RemoveWatermark_Click" IsEnabled="False"
+                            ToolTip="Load an image first. Uses the current mask, or automatic watermark detection in Editor mode."/>
 
                     <Button x:Name="ExpandButton" Content="EXPAND" Height="30" Margin="0,0,6,0"
                             Style="{StaticResource BtnOutline}" Padding="10,0"
-                            Click="Expand_Click" IsEnabled="False" ToolTip="Expand Canvas"/>
+                            Click="Expand_Click" IsEnabled="False" ToolTip="Load an image first. Expand requires a configured compatible API."/>
 
                     <Button x:Name="UpscaleButton" Content="UPSCALE" Height="30" Margin="0,0,6,0"
                             Style="{StaticResource BtnOutline}" Padding="10,0"
-                            Click="Upscale_Click" IsEnabled="False" ToolTip="AI Upscale"/>
+                            Click="Upscale_Click" IsEnabled="False" ToolTip="Load an image first. Uses AI when available, with a local bicubic fallback."/>
 
                     <Rectangle Width="1" Height="20" Fill="{StaticResource BorderBrush}" Margin="0,0,6,0"/>
 
@@ -281,18 +283,26 @@
                     </ScrollViewer>
 
                     <!-- Drop zone overlay -->
-                    <StackPanel x:Name="DropZone" Background="Transparent"
-                                VerticalAlignment="Center" HorizontalAlignment="Center"
-                                IsHitTestVisible="False">
-                        <TextBlock Text="⬡" FontSize="40" HorizontalAlignment="Center"
-                                   Foreground="{StaticResource BorderBrightBrush}"/>
-                        <TextBlock Text="DROP IMAGE HERE" FontSize="14" FontWeight="Bold"
-                                   HorizontalAlignment="Center" Margin="0,8,0,4"
-                                   Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI"/>
-                        <TextBlock Text="or use LOAD IMAGE below" FontSize="11"
-                                   HorizontalAlignment="Center"
-                                   Foreground="{StaticResource BorderBrightBrush}" FontFamily="Segoe UI"/>
-                    </StackPanel>
+                    <Border x:Name="DropZone" VerticalAlignment="Center" HorizontalAlignment="Center"
+                            Background="#E60A1520" BorderBrush="{StaticResource BorderBrightBrush}"
+                            BorderThickness="1" Padding="28,22" CornerRadius="2">
+                        <StackPanel>
+                            <TextBlock Text="⬡" FontSize="40" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource CyberAccentBrush}"/>
+                            <TextBlock Text="START WITH AN IMAGE" FontSize="15" FontWeight="Bold"
+                                       HorizontalAlignment="Center" Margin="0,8,0,5"
+                                       Foreground="{StaticResource TextBrush}" FontFamily="Segoe UI"/>
+                            <TextBlock Text="Drop a PNG or JPEG here, or choose a file."
+                                       HorizontalAlignment="Center" Foreground="{StaticResource TextDimBrush}"
+                                       FontFamily="Segoe UI" FontSize="11"/>
+                            <Button Content="CHOOSE IMAGE" Margin="0,14,0,8" Height="34" MinWidth="150"
+                                    HorizontalAlignment="Center" Style="{StaticResource BtnPrimary}"
+                                    Click="SelectImage_Click" AutomationProperties.Name="Choose an image to edit"/>
+                            <TextBlock Text="Then select a tool or use a quick action above."
+                                       HorizontalAlignment="Center" Foreground="{StaticResource GoldAccentBrush}"
+                                       FontFamily="Segoe UI" FontSize="10"/>
+                        </StackPanel>
+                    </Border>
 
                     <!-- HUD corner brackets overlay on canvas -->
                     <Canvas IsHitTestVisible="False">
@@ -313,9 +323,9 @@
                     <!-- Top-right HUD mini readout -->
                     <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top"
                                 Orientation="Horizontal" Margin="0,6,8,0" IsHitTestVisible="False">
-                        <TextBlock x:Name="ZoomReadout" Text="UTTo" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                        <TextBlock x:Name="ZoomReadout" Text="ZOOM 100%" FontSize="9" Foreground="{StaticResource TextDimBrush}"
                                    FontFamily="Consolas" Margin="0,0,8,0"/>
-                        <TextBlock x:Name="ResReadout" Text="USp" FontSize="9" Foreground="{StaticResource TextDimBrush}"
+                        <TextBlock x:Name="ResReadout" Text="NO IMAGE" FontSize="9" Foreground="{StaticResource TextDimBrush}"
                                    FontFamily="Consolas"/>
                     </StackPanel>
                 </Grid>
@@ -342,10 +352,10 @@
 
                     <!-- Status line -->
                     <TextBlock x:Name="StatusText" Grid.Row="0"
-                               Text="SYSTEM READY"
+                               Text="Ready — load an image to begin."
                                Foreground="{StaticResource CyberAccentBrush}"
                                FontFamily="Consolas" FontSize="11"
-                               Margin="0,0,0,6"/>
+                               Margin="0,0,0,6" AutomationProperties.LiveSetting="Polite"/>
 
                     <!-- Zoom controls -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal">
@@ -463,7 +473,7 @@
                                        Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,3,0,0"/>
                         </StackPanel>
 
-                        <!-- MAGIC WAND -->
+                        <!-- SMART SELECT -->
                         <StackPanel Margin="0,0,12,0" Cursor="Hand"
                                     MouseLeftButtonDown="ToolIcon_MagicWand_Click">
                             <Border x:Name="WandToolBorder" Background="#07101A" BorderBrush="{StaticResource BorderBrightBrush}"
@@ -482,7 +492,7 @@
                                     </Canvas>
                                 </Viewbox>
                             </Border>
-                            <TextBlock Text="MAGIC WAND" FontSize="8" FontWeight="Bold" HorizontalAlignment="Center"
+                            <TextBlock Text="SMART SELECT" FontSize="8" FontWeight="Bold" HorizontalAlignment="Center"
                                        Foreground="{StaticResource TextDimBrush}" FontFamily="Segoe UI" Margin="0,3,0,0"/>
                         </StackPanel>
 

@@ -5,15 +5,18 @@
         ui:WindowHelper.UseModernWindowStyle="True"
         ui:ThemeManager.RequestedTheme="Dark"
         Style="{StaticResource CyberWindowStyle}"
-        Title="Softcurse Media Studio AI"
+        Title="Softcurse Media Lab AI"
         Icon="/assets/logo.png"
         Height="820" Width="1340"
         MinHeight="650" MinWidth="1000"
+        PreviewKeyDown="MainWindow_PreviewKeyDown"
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
         <!-- Nav item button style -->
         <Style x:Key="NavItemStyle" TargetType="Button">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource SoftcurseFocusVisual}"/>
+            <Setter Property="ToolTipService.InitialShowDelay" Value="300"/>
             <Setter Property="Background"      Value="Transparent"/>
             <Setter Property="BorderBrush"     Value="{StaticResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -143,10 +146,12 @@
                         </Border>
 
                         <!-- Nav items -->
-                        <StackPanel Grid.Row="1" Margin="0,8">
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="0,8">
 
                             <!-- IMAGE EDITOR — from softcurse-icons.html: layered frames + mountain + pencil -->
                             <Button x:Name="NavImageEditor" Tag="ImagePage"
+                                    ToolTip="Image Editor (Ctrl+1)" AutomationProperties.Name="Image Editor"
                                     Style="{StaticResource NavItemSelectedStyle}"
                                     Click="NavButton_Click">
                                 <StackPanel HorizontalAlignment="Center">
@@ -185,6 +190,7 @@
 
                             <!-- MASK PROCESSOR — from softcurse-icons.html: rings + crosshair + dots -->
                             <Button x:Name="NavBatch" Tag="ToolkitPage"
+                                    ToolTip="Toolkit Lab (Ctrl+2)" AutomationProperties.Name="Toolkit Lab"
                                     Style="{StaticResource NavItemStyle}"
                                     Click="NavButton_Click">
                                 <StackPanel HorizontalAlignment="Center">
@@ -229,8 +235,9 @@
                                 </StackPanel>
                             </Button>
 
-                            <!-- FORGE LAB — from softcurse-icons.html: play button + film perfs + ring -->
+                            <!-- VIDEO RETOUCH — play button + film perfs + ring -->
                             <Button x:Name="NavVideo" Tag="VideoPage"
+                                    ToolTip="Video Retouch (Ctrl+3)" AutomationProperties.Name="Video Retouch"
                                     Style="{StaticResource NavItemStyle}"
                                     Click="NavButton_Click">
                                 <StackPanel HorizontalAlignment="Center">
@@ -269,14 +276,38 @@
                                                        Stroke="#00E5FF" StrokeThickness="1" Fill="Transparent" RadiusX="0.5" RadiusY="0.5" Opacity="0.6"/>
                                         </Canvas>
                                     </Viewbox>
-                                    <TextBlock Text="FORGE LAB" FontSize="10" FontWeight="Bold"
+                                    <TextBlock Text="VIDEO RETOUCH" FontSize="10" FontWeight="Bold"
                                                HorizontalAlignment="Center"
                                                FontFamily="Segoe UI"/>
                                 </StackPanel>
                             </Button>
 
-                            <!-- AI GENERATION HUB — from softcurse-icons.html: orbit ellipses + core -->
+                            <!-- AV CONVERTER — explicit navigation to the FFmpeg conversion workflow -->
+                            <Button x:Name="NavConverter" Tag="ConverterPage"
+                                    ToolTip="Audio / Video Converter (Ctrl+4)" AutomationProperties.Name="Audio and Video Converter"
+                                    Style="{StaticResource NavItemStyle}"
+                                    Click="NavButton_Click">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Viewbox Width="38" Height="38" Margin="0,0,0,4">
+                                        <Canvas Width="44" Height="44">
+                                            <Rectangle Canvas.Left="7" Canvas.Top="10" Width="30" Height="24"
+                                                       Stroke="#00E5FF" StrokeThickness="1.2" Fill="#0A1830"/>
+                                            <Path Data="M12,17 L29,17 L25,13 M29,17 L25,21"
+                                                  Stroke="#00E5FF" StrokeThickness="1.7" Fill="Transparent"/>
+                                            <Path Data="M32,27 L15,27 L19,23 M15,27 L19,31"
+                                                  Stroke="#C8973A" StrokeThickness="1.7" Fill="Transparent"/>
+                                            <Ellipse Canvas.Left="9" Canvas.Top="14" Width="4" Height="4" Fill="#C8973A"/>
+                                            <Ellipse Canvas.Left="31" Canvas.Top="25" Width="4" Height="4" Fill="#00E5FF"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                    <TextBlock Text="AV CONVERTER" FontSize="10" FontWeight="Bold"
+                                               HorizontalAlignment="Center" FontFamily="Segoe UI"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- GENERATIVE IMAGE API — optional external API client -->
                             <Button x:Name="NavGenFill" Tag="GenFillPage"
+                                    ToolTip="Generative Image API (Ctrl+5)" AutomationProperties.Name="Generative Image API"
                                     Style="{StaticResource NavItemStyle}"
                                     Click="NavButton_Click">
                                 <StackPanel HorizontalAlignment="Center">
@@ -316,70 +347,48 @@
                                             </Ellipse>
                                         </Canvas>
                                     </Viewbox>
-                                    <TextBlock Text="AI GENERATION HUB" FontSize="10" FontWeight="Bold"
-                                               HorizontalAlignment="Center"
-                                               FontFamily="Segoe UI" TextWrapping="Wrap" TextAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-
-                            <!-- SPRITE GENERATOR — 2×2 sprite grid with character poses -->
-                            <Button x:Name="NavSprite" Tag="SpritePage"
-                                    Style="{StaticResource NavItemStyle}"
-                                    Click="NavButton_Click">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <Viewbox Width="38" Height="38" Margin="0,0,0,4">
-                                        <Canvas Width="44" Height="44">
-                                            <!-- 2x2 frame grid -->
-                                            <Rectangle Canvas.Left="2"  Canvas.Top="2"  Width="18" Height="18"
-                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="#071018" RadiusX="1" RadiusY="1"/>
-                                            <Rectangle Canvas.Left="24" Canvas.Top="2"  Width="18" Height="18"
-                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="#071018" RadiusX="1" RadiusY="1"/>
-                                            <Rectangle Canvas.Left="2"  Canvas.Top="24" Width="18" Height="18"
-                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="#071018" RadiusX="1" RadiusY="1"/>
-                                            <Rectangle Canvas.Left="24" Canvas.Top="24" Width="18" Height="18"
-                                                       Stroke="#00E5FF" StrokeThickness="1" Fill="#071018" RadiusX="1" RadiusY="1"/>
-                                            <!-- Character pose 1 (top-left) -->
-                                            <Ellipse Canvas.Left="8" Canvas.Top="5" Width="5" Height="5" Fill="#C8973A"/>
-                                            <Rectangle Canvas.Left="9" Canvas.Top="11" Width="3" Height="5" Fill="#C8973A"/>
-                                            <!-- Character pose 2 (top-right) -->
-                                            <Ellipse Canvas.Left="30" Canvas.Top="5" Width="5" Height="5" Fill="#00E5FF"/>
-                                            <Rectangle Canvas.Left="31" Canvas.Top="11" Width="3" Height="5" Fill="#00E5FF"/>
-                                            <!-- Character pose 3 (bottom-left) -->
-                                            <Ellipse Canvas.Left="8" Canvas.Top="27" Width="5" Height="5" Fill="#00E5FF"/>
-                                            <Rectangle Canvas.Left="9" Canvas.Top="33" Width="3" Height="5" Fill="#00E5FF"/>
-                                            <!-- Character pose 4 (bottom-right) -->
-                                            <Ellipse Canvas.Left="30" Canvas.Top="27" Width="5" Height="5" Fill="#C8973A"/>
-                                            <Rectangle Canvas.Left="31" Canvas.Top="33" Width="3" Height="5" Fill="#C8973A"/>
-                                        </Canvas>
-                                    </Viewbox>
-                                    <TextBlock Text="SPRITE GENERATOR" FontSize="10" FontWeight="Bold"
+                                    <TextBlock Text="GENERATIVE API" FontSize="10" FontWeight="Bold"
                                                HorizontalAlignment="Center"
                                                FontFamily="Segoe UI" TextWrapping="Wrap" TextAlignment="Center"/>
                                 </StackPanel>
                             </Button>
 
                         </StackPanel>
+                        </ScrollViewer>
 
-                        <!-- Settings at bottom of sidebar -->
+                        <!-- Help and settings at bottom of sidebar -->
                         <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
-                            <Button x:Name="NavSettings" Tag="SettingsPage"
-                                    Style="{StaticResource NavItemStyle}"
-                                    Click="NavButton_Click" Margin="8,8">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <!-- Gear icon -->
-                                    <Viewbox Width="18" Height="18" Margin="0,0,8,0">
-                                        <Canvas Width="24" Height="24">
-                                            <Ellipse Canvas.Left="8" Canvas.Top="8" Width="8" Height="8"
-                                                     Stroke="{StaticResource TextDimBrush}" StrokeThickness="1.5" Fill="Transparent"/>
-                                            <Path Stroke="{StaticResource TextDimBrush}" StrokeThickness="1.5" Fill="Transparent"
-                                                  Data="M12,2 L12,5 M12,19 L12,22 M2,12 L5,12 M19,12 L22,12 M4.2,4.2 L6.3,6.3 M17.7,17.7 L19.8,19.8 M19.8,4.2 L17.7,6.3 M6.3,17.7 L4.2,19.8"/>
-                                        </Canvas>
-                                    </Viewbox>
-                                    <TextBlock Text="SETTINGS" FontSize="10" FontWeight="Bold"
-                                               VerticalAlignment="Center" 
-                                               FontFamily="Segoe UI"/>
-                                </StackPanel>
-                            </Button>
+                            <StackPanel Margin="8,6">
+                                <Button x:Name="NavFaq" Tag="FaqPage"
+                                        ToolTip="FAQ and User Guide (Ctrl+7)" AutomationProperties.Name="FAQ and User Guide"
+                                        Style="{StaticResource NavItemStyle}" Click="NavButton_Click" Margin="0,0,0,2">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Border Width="18" Height="18" Margin="0,0,8,0" CornerRadius="9"
+                                                BorderBrush="{StaticResource TextDimBrush}" BorderThickness="1.4">
+                                            <TextBlock Text="?" FontSize="12" FontWeight="Bold" TextAlignment="Center"
+                                                       Foreground="{StaticResource TextDimBrush}" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="FAQ / GUIDE" FontSize="10" FontWeight="Bold"
+                                                   VerticalAlignment="Center" FontFamily="Segoe UI"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="NavSettings" Tag="SettingsPage"
+                                        ToolTip="Settings (Ctrl+6)" AutomationProperties.Name="Settings"
+                                        Style="{StaticResource NavItemStyle}" Click="NavButton_Click">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Viewbox Width="18" Height="18" Margin="0,0,8,0">
+                                            <Canvas Width="24" Height="24">
+                                                <Ellipse Canvas.Left="8" Canvas.Top="8" Width="8" Height="8"
+                                                         Stroke="{StaticResource TextDimBrush}" StrokeThickness="1.5" Fill="Transparent"/>
+                                                <Path Stroke="{StaticResource TextDimBrush}" StrokeThickness="1.5" Fill="Transparent"
+                                                      Data="M12,2 L12,5 M12,19 L12,22 M2,12 L5,12 M19,12 L22,12 M4.2,4.2 L6.3,6.3 M17.7,17.7 L19.8,19.8 M19.8,4.2 L17.7,6.3 M6.3,17.7 L4.2,19.8"/>
+                                            </Canvas>
+                                        </Viewbox>
+                                        <TextBlock Text="SETTINGS" FontSize="10" FontWeight="Bold"
+                                                   VerticalAlignment="Center" FontFamily="Segoe UI"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                         </Border>
                     </Grid>
                 </Border>
@@ -395,11 +404,29 @@
                     <Border Grid.Row="0" Background="#07101A"
                             BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <!-- Left: live component health -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0"
+                                        AutomationProperties.Name="Application component health">
+                                <Ellipse x:Name="CoreHealthDot" Width="7" Height="7" Fill="{StaticResource TextDimBrush}"/>
+                                <TextBlock x:Name="CoreHealthText" Text="CORE CHECKING" Margin="5,0,12,0"
+                                           FontSize="9" FontFamily="Consolas" Foreground="{StaticResource TextDimBrush}"/>
+                                <Ellipse x:Name="FfmpegHealthDot" Width="7" Height="7" Fill="{StaticResource TextDimBrush}"/>
+                                <TextBlock x:Name="FfmpegHealthText" Text="FFMPEG CHECKING" Margin="5,0,12,0"
+                                           FontSize="9" FontFamily="Consolas" Foreground="{StaticResource TextDimBrush}"/>
+                                <Ellipse x:Name="ApiHealthDot" Width="7" Height="7" Fill="{StaticResource TextDimBrush}"/>
+                                <TextBlock x:Name="ApiHealthText" Text="API CHECKING" Margin="5,0,0,0"
+                                           FontSize="9" FontFamily="Consolas" Foreground="{StaticResource TextDimBrush}"/>
+                            </StackPanel>
                             <!-- Centered title -->
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <!-- Left bracket decoration -->
                                 <TextBlock Text="⬡" FontSize="12" Foreground="{StaticResource BorderBrightBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Text="SOFTCURSE MEDIA STUDIO AI" FontSize="14" FontWeight="Bold"
+                                <TextBlock Text="SOFTCURSE MEDIA LAB AI" FontSize="14" FontWeight="Bold"
                                            Foreground="{StaticResource CyberAccentBrush}"
                                            VerticalAlignment="Center" FontFamily="Segoe UI">
                                     <TextBlock.Effect>
@@ -410,8 +437,8 @@
                             </StackPanel>
 
                             <!-- Right: version indicator -->
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,16,0">
-                                <TextBlock Text="v2.0" FontSize="10" Foreground="{StaticResource TextDimBrush}"
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,16,0">
+                                <TextBlock Text="v1.0.0" FontSize="10" Foreground="{StaticResource TextDimBrush}"
                                            VerticalAlignment="Center" FontFamily="Consolas"/>
                             </StackPanel>
                         </Grid>
